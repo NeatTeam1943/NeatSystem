@@ -1,0 +1,42 @@
+name: Nightly database backup
+
+# The free Supabase plan has no backups. This dumps NeatSystem's project every
+# night and keeps 30 days as encrypted artifacts. (MoneyTeam is a separate
+# project and is not touched.)
+#
+# Secrets:
+#   SUPABASE_DB_URL     Session pooler connection string (Settings -> Database), with the password
+#   BACKUP_PASSPHRASE   any long random string — keep a copy somewhere safe, restores need it
+# Restore: download the artifact, then
+#   gpg -d backup.sql.gz.gpg | gunzip | psql "<db url>"
+
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 03:17 Israel time (winter)
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install pg_dump 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+      - name: Dump and encrypt
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          /usr/lib/postgresql/17/bin/pg_dump "$DB" --no-owner --no-privileges \
+            --schema=hub --schema=auth \
+            | gzip -9 | gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" -c -o backup.sql.gz.gpg
+          ls -lh backup.sql.gz.gpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-${{ github.run_id }}
+          path: backup.sql.gz.gpg
+          retention-days: 30
