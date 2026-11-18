@@ -60,15 +60,14 @@ npm run test:db         # מיגרציות + בדיקות הרשאה על Postgr
    1. Settings → Pages → Source: GitHub Actions.
    2. Secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (של הפרויקט **החדש**).
    3. Variables (לא סודיים — MoneyTeam כבר שולח אותם לכל דפדפן): `MONEYTEAM_SUPABASE_URL`, `MONEYTEAM_SUPABASE_ANON_KEY`.
-   4. לגיבוי הלילי: Secrets `SUPABASE_DB_URL` (Session pooler של הפרויקט החדש, עם סיסמה) ו-`BACKUP_PASSPHRASE`.
-   5. בהגדרות הארגון: להגביל מי יכול ליצור ריפואים ולהפעיל Pages.
+   4. בהגדרות הארגון: להגביל מי יכול ליצור ריפואים ולהפעיל Pages.
 
 **ב-MoneyTeam לא משנים כלום** — לא קוד, לא מסד, לא הגדרות.
 
 ## Workflows
 - `deploy.yml` — בדיקות + בנייה + פרסום ל-Pages בכל push ל-main.
 - `checks.yml` — typecheck, בדיקות, בנייה, ובדיקות ה-SQL מול Postgres בכל PR.
-- `backup.yml` — `pg_dump` לילי של הפרויקט של NeatSystem, מוצפן, נשמר 30 יום.
+- הגיבוי הלילי **לא כאן** (הריפו הזה ציבורי): הוא רץ בריפו הפרטי `NeatSystem-backups`.
 
 ## הערות
 - Supabase Advisor יסמן את `hub.people` ו-`hub.audit` כ-"security definer view". זה מכוון: ה-view הוא המקום שבו נאכפים כללי הצפייה,
