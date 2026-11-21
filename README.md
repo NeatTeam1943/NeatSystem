@@ -124,6 +124,16 @@ npm run test:db         # המיגרציות של NeatSystem ושל כל תת-מ
 
 **ב-MoneyTeam לא משנים כלום** — לא קוד, לא מסד, לא הגדרות.
 
+## העברת הנתונים מ-Firebase (פעם אחת)
+```bash
+git submodule update --init
+node scripts/import-firebase.mjs
+```
+הסקריפט שואל על כל מערכת project id ו-web API key, אותם ערכים שהיו ב-`.env` הישן או ב-Firebase console → Project settings.
+- הוא קורא את Firestore מהמחשב שלך ויוצר קבצים ב-`firebase-import/`. התיקייה מוחרגת מ-git.
+- ב-Supabase → SQL Editor מדביקים כל קובץ ומריצים, לפי הסדר שהסקריפט מדפיס. מותר להריץ שוב.
+- לפני כן צריך להריץ את `systems/trainings/supabase/migrations/0002_firestore_import.sql`.
+
 ## Workflows
 - `deploy.yml` — בדיקות + בנייה + פרסום ל-Pages בכל push ל-main.
 - `checks.yml` — typecheck, בדיקות, בנייה, ובדיקות ה-SQL מול Postgres בכל PR.

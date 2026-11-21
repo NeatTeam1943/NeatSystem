@@ -4,3 +4,6 @@ dist
 .env.local
 *.log
 *.tsbuildinfo
+
+# output of scripts/import-firebase.mjs (people's names and phones)
+firebase-import/
