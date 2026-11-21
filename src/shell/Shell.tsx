@@ -44,7 +44,7 @@ function Rail({ nav, badges }: { nav: NavEntry[]; badges: Record<string, number>
   const rest = nav.filter((n) => n.order >= 80)
   return (
     <nav className="rail" aria-label="ניווט ראשי">
-      <Link to="/" className="brand brandmark" aria-label="NeatHub — בית">N</Link>
+      <Link to="/" className="brand" aria-label="NeatSystem — בית"><span className="brandmark">N</span><span>NeatSystem</span></Link>
       {main.map((n) => <NavItem key={n.to} n={n} badge={badges[n.to]} className="navi" />)}
       {rest.length > 0 && <div className="sep" />}
       {rest.map((n) => <NavItem key={n.to} n={n} badge={badges[n.to]} className="navi" />)}
@@ -74,7 +74,7 @@ function Dock({ nav, badges }: { nav: NavEntry[]; badges: Record<string, number>
           <div className="list">
             {rest.map((n) => {
               const I = n.icon
-              const body = <><span className="avatar" style={{ width: 40, height: 40, background: 'var(--blue-dim)', color: '#d4cfff' }}><I size={20} /></span><span className="main2 ttl">{n.label}</span>{n.external && <ExternalLink size={16} className="cm" />}</>
+              const body = <><span className="avatar" style={{ width: 40, height: 40, background: 'var(--brand-subtle)', color: 'var(--brand-text)' }}><I size={20} /></span><span className="main2 ttl">{n.label}</span>{n.external && <ExternalLink size={16} className="cm" />}</>
               return n.external
                 ? <a key={n.to} href={n.to} target="_blank" rel="noopener" className="lrow click" onClick={(e) => { setMore(false); if (n.action) { e.preventDefault(); n.action(s) } }}>{body}</a>
                 : <Link key={n.to} to={n.to} className="lrow click" onClick={() => setMore(false)}>{body}</Link>

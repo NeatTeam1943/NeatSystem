@@ -1,31 +1,30 @@
 /* Screen-specific bits (kept out of the design system file) */
 
 /* gates: login / onboarding / pending */
-.gate { min-height: 100dvh; display: grid; place-items: center; padding: 20px 14px 40px; }
-.gatecard { width: min(520px, 100%); background: rgba(20, 20, 27, 0.85); backdrop-filter: blur(14px); border-radius: 32px; padding: 26px 20px; box-shadow: inset 0 0 0 1px var(--line-2), 0 30px 80px rgba(0, 0, 0, 0.5); }
-@media (min-width: 640px) { .gatecard { padding: 34px 32px; } }
+.gate { min-height: 100dvh; display: grid; place-items: center; padding: 32px 16px 40px; }
+.gatecard { width: min(440px, 100%); background: var(--bg-surface); border-radius: var(--r-lg); padding: 24px; box-shadow: var(--shadow-lg); }
 
 /* home hero tiles */
-.card.hero { display: flex; align-items: center; gap: 16px; padding: 18px; border-radius: 28px; }
-.hero .heroic { width: 54px; height: 54px; border-radius: 50%; background: #fff; color: var(--orange); display: grid; place-items: center; flex: none; }
+.card.hero { display: flex; align-items: center; gap: 16px; padding: 16px; }
+.hero .heroic { width: 52px; height: 52px; border-radius: 50%; background: var(--reward); color: var(--on-reward); display: grid; place-items: center; flex: none; }
 .hero .h2 { margin: 1px 0 2px; }
 
 /* people */
-.pgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.pgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 @media (min-width: 640px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1100px) { .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .pcard { display: flex !important; align-items: center; gap: 14px; padding: 14px; }
-.idcard { border-radius: 28px; padding: 20px; }
+.idcard { padding: 20px; }
 
 /* inbox rows */
-.ibx { display: flex; gap: 12px; align-items: flex-start; padding: 14px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.ibx:last-child { border-bottom: 0; }
-.ibx .ic { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; background: var(--blue-dim); color: #d4cfff; }
-.ibx.urgent .ic { background: var(--warn-dim); color: var(--warn); }
+.ibx { display: flex; gap: 12px; align-items: flex-start; padding: 14px 12px; flex-wrap: wrap; position: relative; }
+.ibx + .ibx { border-top: 1px solid var(--border); }
+.ibx .ic { width: 40px; height: 40px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; background: var(--brand-subtle); color: var(--brand-text); }
+.ibx.urgent .ic { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--warning-text); }
 .ibx .body { flex: 1; min-width: 200px; }
 .ibx .ttl { font-size: 15px; }
-.ibx .meta { font-size: 13px; color: var(--text-2); margin-top: 2px; }
-.ibx .acts { display: flex; gap: 6px; align-items: center; width: 100%; padding-inline-start: 54px; }
+.ibx .meta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.ibx .acts { display: flex; gap: 6px; align-items: center; width: 100%; padding-inline-start: 52px; }
 .ibx .acts .btn { flex: 1; }
 @media (min-width: 768px) {
   .ibx { flex-wrap: nowrap; align-items: center; }
@@ -35,5 +34,25 @@
 
 /* admin */
 .matrix tbody tr { cursor: default; }
-.matrix tr.grp td { background: rgba(255, 255, 255, 0.02); padding-top: 14px; }
+.matrix tr.grp td { background: var(--bg-subtle); padding-top: 14px; }
 .matrix td .switch { vertical-align: middle; }
+
+/* sub-systems: tab root, profile sections, MoneyTeam frame */
+.tabroot { min-height: 40dvh; }
+.sysic { width: 32px; height: 32px; border-radius: var(--r-sm); display: inline-grid; place-items: center; background: var(--brand-subtle); color: var(--brand-text); flex: none; }
+.sysic.lg { width: 48px; height: 48px; border-radius: var(--r-md); }
+.sysdown { background: var(--bg-subtle); box-shadow: none !important; }
+.tabcrash { border: 1px solid var(--danger); }
+.pstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.pstat { background: var(--bg-subtle); border-radius: var(--r-md); padding: 10px 12px; }
+.pstat .v { font-size: 22px; line-height: 28px; font-weight: 700; }
+.pstat .l { font-size: 13px; color: var(--text-secondary); }
+.pstat .h { font-size: 12px; color: var(--text-muted); }
+.pprog .bar { height: 6px; border-radius: var(--r-full); background: var(--progress-track); overflow: hidden; margin: 6px 0 4px; }
+.pprog .bar i { display: block; height: 100%; background: var(--brand); border-radius: var(--r-full); }
+.psub { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+.subtle { background: var(--bg-subtle); border-radius: var(--r-md); padding: 12px; }
+.rot180 { transform: rotate(180deg); }
+.bul { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; }
+.moneyframe { display: block; width: calc(100% + 32px); margin: -8px -16px 0; height: calc(100dvh - 56px - var(--dock-h) - env(safe-area-inset-bottom)); border: 0; background: var(--bg-surface); }
+@media (min-width: 768px) { .moneyframe { width: calc(100% + 48px); margin: -8px -24px -48px; height: calc(100dvh - 56px); } }

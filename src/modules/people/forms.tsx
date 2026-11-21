@@ -68,9 +68,10 @@ export function MembershipForm({ person, onDone }: { person: Person; onDone?: ()
     setBusy(false)
     if (ok) { invalidate(); onDone?.() }
   }
-  const setStatus = async (status: 'active' | 'archived') => {
+  const [leaving, setLeaving] = useState(false)
+  const restore = async () => {
     setBusy(true)
-    const ok = await run(() => api.updateMembership({ user: person.id, status }), status === 'archived' ? `${person.full_name} הועבר/ה לארכיון` : `${person.full_name} הוחזר/ה לפעילות`)
+    const ok = await run(() => api.restoreMember(person.id), `${person.full_name} הוחזר/ה לפעילות`)
     setBusy(false)
     if (ok) { invalidate(); onDone?.() }
   }
@@ -116,12 +117,43 @@ export function MembershipForm({ person, onDone }: { person: Person; onDone?: ()
       )}
       <div className="row wrap" style={{ marginTop: 4 }}>
         {!self && (person.status === 'archived'
-          ? <Button size="sm" onClick={() => setStatus('active')} busy={busy}>החזרה לפעילות</Button>
-          : <Button size="sm" variant="danger" onClick={() => setStatus('archived')} busy={busy}>העברה לארכיון</Button>)}
+          ? <Button size="sm" onClick={restore} busy={busy}>החזרה לפעילות</Button>
+          : <Button size="sm" variant="danger" onClick={() => setLeaving(true)} busy={busy}>הוצאה מהקבוצה…</Button>)}
         <span className="grow" />
         <Button variant="primary" disabled={!dirty || !f.full_name.trim()} busy={busy} onClick={save}>שמירה</Button>
       </div>
+      {leaving && <ArchiveSheet person={person} onClose={() => setLeaving(false)} onDone={() => { setLeaving(false); onDone?.() }} />}
     </div>
+  )
+}
+
+const REASONS = ['סיים/ה י״ב', 'עזב/ה את הקבוצה', 'עבר/ה לבית ספר אחר', 'מנטור/ית שסיים/ה']
+
+/** Leaving the team: nothing is deleted, access to every system stops at once. */
+export function ArchiveSheet({ person, onClose, onDone }: { person: Person; onClose: () => void; onDone: () => void }) {
+  const run = useRun()
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const go = async () => {
+    setBusy(true)
+    const ok = await run(() => api.archiveMember(person.id, reason.trim() || null), `${person.full_name} הועבר/ה לארכיון`)
+    setBusy(false)
+    if (ok) { invalidate(); onDone() }
+  }
+  return (
+    <Sheet title={`הוצאת ${person.full_name} מהקבוצה`} onClose={onClose}
+      footer={<><Button onClick={onClose}>ביטול</Button><Button variant="danger" busy={busy} onClick={go}>העברה לארכיון</Button></>}>
+      <div className="stack">
+        <ul className="bul c2">
+          <li>הגישה לכל המערכות (NeatSystem, הכשרות, NeatHub ושאר הטאבים) נחסמת מיד.</li>
+          <li>שום דבר לא נמחק: הפרופיל, ההסמכות, הדרגות וההיסטוריה נשארים בכל מערכת.</li>
+          <li>נשמרת רשומת ארכיון עם כל מה שהופיע בפרופיל ברגע הזה, גם אם מערכת תשתנה בהמשך.</li>
+          <li>אפשר להחזיר לפעילות בכל רגע.</li>
+        </ul>
+        <Field label="סיבה (לא חובה)">{(id) => <Input id={id} value={reason} maxLength={300} list="archive-reasons" onChange={(e) => setReason(e.target.value)} />}</Field>
+        <datalist id="archive-reasons">{REASONS.map((r) => <option key={r} value={r} />)}</datalist>
+      </div>
+    </Sheet>
   )
 }
 

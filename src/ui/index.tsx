@@ -198,7 +198,7 @@ export function Empty({ icon: Icon, title, children }: { icon: LucideIcon; title
   return (
     <div className="empty">
       <div className="ic"><Icon size={26} aria-hidden /></div>
-      <div className="w7" style={{ color: '#fff' }}>{title}</div>
+      <div className="w7" style={{ color: 'var(--text)' }}>{title}</div>
       {children && <div className="foot" style={{ marginTop: 4 }}>{children}</div>}
     </div>
   )

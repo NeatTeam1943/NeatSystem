@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # the sub-system tabs under systems/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -18,6 +20,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:systems
       - run: npm run build:mock
 
   database:
@@ -32,6 +35,8 @@ jobs:
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # the sub-system tabs under systems/
       - run: bash scripts/test-db.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, House, Inbox, Sparkles } from 'lucide-react'
+import { ArrowLeft, House, Inbox } from 'lucide-react'
 import type { HubModule } from '@/core/module'
 import { useSession } from '@/core/session'
 import { firstName, gradeLabel, gradeOf, POSITION_LABEL, teamName } from '@/core/labels'
 import { fmtToday } from '@/core/format'
 import { MODULES } from '@/app/modules'
-import { Avatar, Card, PageHead } from '@/ui'
+import { Avatar, PageHead } from '@/ui'
 import { useInboxItems } from '../inbox'
 
 function HomePage() {
@@ -41,15 +41,6 @@ function HomePage() {
             <ArrowLeft size={20} aria-hidden />
           </Link>
           {widgets.filter((w) => w.column === 'main').map((w) => <w.Component key={w.id} />)}
-          <Card mesh="dark">
-            <div className="row top" style={{ gap: 12 }}>
-              <Sparkles size={20} className="cr" aria-hidden />
-              <div className="grow">
-                <div className="w7">מה עוד יגיע לכאן</div>
-                <div className="foot c2">NeatHub (הקישורים), ההסמכות והדרגות, הפגישות, סאנדיי והמטבעות — כל אחד מהם יתחבר למסך הזה כמודול.</div>
-              </div>
-            </div>
-          </Card>
         </div>
         <div className="stack">
           {widgets.filter((w) => w.column === 'side').map((w) => <w.Component key={w.id} />)}

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { ApiError, type Api, type AuditEntry, type Person } from './types'
+import { ApiError, type Api, type ArchiveRecord, type AuditEntry, type Person } from './types'
 
 /**
  * NeatSystem's own Supabase project (separate from MoneyTeam's).
@@ -24,6 +24,7 @@ export function makeSupabaseApi(url: string, anonKey: string): Api {
 
   return {
     mode: 'supabase',
+    client: sb,
 
     async currentUser() {
       const { data } = await sb.auth.getSession()
@@ -103,5 +104,17 @@ export function makeSupabaseApi(url: string, anonKey: string): Api {
     }),
     setRolePermission: (role, perm, on) => rpc('set_role_permission', { p_role: role, p_perm: perm, p_on: on }),
     setUserPermission: (user, perm, on) => rpc('set_user_permission', { p_user: user, p_perm: perm, p_on: on }),
+    archiveMember: async (user, reason) => {
+      const { error } = await hub().rpc('archive_member', { p_user: user, p_reason: reason })
+      if (error) fail(error)
+    },
+    restoreMember: (user) => rpc('restore_member', { p_user: user }),
+    async archives(user) {
+      let q = hub().from('archives').select('*').order('archived_at', { ascending: false })
+      if (user) q = q.eq('user_id', user)
+      const { data, error } = await q
+      if (error) fail(error)
+      return (data ?? []) as ArchiveRecord[]
+    },
   }
 }

@@ -4,7 +4,7 @@
  * to demo them; the SQL (and its tests) is the source of truth.
  * All names are invented.
  */
-import { ApiError, type Api, type AuditEntry, type Person, type Position, type Role, type RolePerm, type Team, type Permission, type UserPerm } from './types'
+import { ApiError, type Api, type ArchiveRecord, type AuditEntry, type Person, type Position, type Role, type RolePerm, type Team, type Permission, type UserPerm } from './types'
 
 type Row = Omit<Person, 'birthday'> & { email: string }
 
@@ -61,7 +61,7 @@ function seed(): Row[] {
     P('u12', 'גל מזרחי', { team: 'software', grad_year: 2029, birth_date: '2010-01-21' }),
     P('u13', 'אורי ברק', { team: 'cad', grad_year: 2029, birth_date: '2010-10-10' }),
     P('u14', 'הילה שמש', { team: 'software', grad_year: 2028, birth_date: '2009-09-19', subteams: ['media'] }),
-    P('u15', 'יונתן רוזן', { position: 'member', team: 'build', grad_year: 2027, birth_date: '2008-07-07', status: 'archived' }),
+    P('u15', 'יונתן רוזן', { position: 'member', team: 'build', grad_year: 2027, birth_date: '2008-07-07', status: 'archived', archived_at: '2026-11-14T19:02:00Z', archive_reason: 'סיים י״ב' }),
     P('u16', 'נדב שלום', { position: 'rookie', team: 'build', grad_year: 2030, birth_date: '2011-04-04' }),
     P('u17', 'עדי פרידמן', { position: 'rookie', team: 'software', grad_year: 2030, birth_date: '2011-02-14' }),
     P('u18', 'בר אלון', { position: 'rookie', team: 'cad', grad_year: 2030, birth_date: '2011-06-06' }),
@@ -85,7 +85,7 @@ export const PERSONAS: { id: string; label: string }[] = [
 const store = (() => {
   const key = 'neathub.mock.v1'
   const fresh = () => ({
-    rows: seed(), rolePerms: [...ROLE_PERMS], userPerms: [] as UserPerm[], audit: [] as AuditEntry[],
+    rows: seed(), rolePerms: [...ROLE_PERMS], userPerms: [] as UserPerm[], audit: [] as AuditEntry[], archives: [] as ArchiveRecord[],
     me: 'u1' as string, newUser: null as null | { id: string; email: string; name: string },
   })
   let s = fresh()
@@ -148,11 +148,67 @@ function visible(r: Row): Person | null {
   }
 }
 const commit = () => { store.save(); emit() }
+
+/**
+ * Mock stand-in for hub.subsystem_snapshot: sub-system tabs register their
+ * mock profile readers here (see src/app/tabs.tsx), so archiving in the
+ * preview freezes what each tab showed, like the SQL does.
+ */
+/**
+ * Mock stand-in for hub.register_permissions: a tab's `mock.permissions`
+ * (the same list its SQL migration registers) joins the table in the preview.
+ */
+export function registerMockPermissions(module: string, perms: { key: string; label: string; grp?: string; sort?: number; roles?: string[] }[]) {
+  const s = store.get()
+  for (const p of perms) {
+    if (!p.key.startsWith(`${module}.`) || PERMS.some((x) => x.key === p.key)) continue
+    PERMS.push({ key: p.key, label: p.label, grp: p.grp ?? module, module, sort: p.sort ?? 0 })
+    for (const r of p.roles ?? []) if (!s.rolePerms.some((x) => x.role === r && x.perm === p.key)) s.rolePerms.push({ role: r as Role, perm: p.key })
+  }
+}
+
+type MockCtx = { me: Person; people: Person[]; can: (perm: string) => boolean }
+const snapshotReaders = new Map<string, (user: string, ctx: MockCtx) => unknown | Promise<unknown>>()
+export function registerMockSnapshot(id: string, read: (user: string, ctx: MockCtx) => unknown | Promise<unknown>) { snapshotReaders.set(id, read) }
+
+async function archive(user: string, reason: string | null) {
+  if (!has('users.edit_membership')) err('אין הרשאה: users.edit_membership')
+  if (user === meId()) err('אי אפשר להעביר את עצמך לארכיון')
+  const r = row(user)
+  if (!r || r.status !== 'active') err('אפשר להעביר לארכיון רק חבר/ה פעיל/ה', 'P0002')
+  if ((r!.position === 'mentor' || r!.is_admin) && !has('users.grant_permissions')) err('אין הרשאה: users.grant_permissions')
+  const systems: Record<string, unknown> = {}
+  const ctx: MockCtx = { me: visible(row(meId())!)!, people: store.get().rows.map(visible).filter((x): x is Person => !!x), can: (p) => has(p) }
+  for (const [id, read] of snapshotReaders) {
+    try { systems[id] = await read(user, ctx) } catch (e) { systems[id] = { error: 'P0001', detail: (e as Error).message } }
+  }
+  const s = store.get()
+  const at = new Date().toISOString()
+  const rec: ArchiveRecord = {
+    id: s.archives.length + 1, user_id: user, full_name: r!.full_name, archived_at: at, archived_by: meId(),
+    archived_by_name: row(meId())?.full_name ?? null, reason: reason?.trim() || null,
+    profile: { ...r! }, systems, audit: s.audit.filter((a) => a.target_id === user), restored_at: null,
+  }
+  s.archives.unshift(rec)
+  Object.assign(r!, { status: 'archived', archived_at: at, archive_reason: rec.reason })
+  audit('user.archived', 'user', user, { reason: rec.reason, archive: rec.id })
+}
+function restore(user: string) {
+  if (!has('users.edit_membership')) err('אין הרשאה: users.edit_membership')
+  const r = row(user)
+  if (!r || r.status !== 'archived') err('המשתמש לא בארכיון', 'P0002')
+  if ((r!.position === 'mentor' || r!.is_admin) && !has('users.grant_permissions')) err('אין הרשאה: users.grant_permissions')
+  Object.assign(r!, { status: 'active', archived_at: null, archive_reason: null })
+  const rec = store.get().archives.find((a) => a.user_id === user && !a.restored_at)
+  if (rec) rec.restored_at = new Date().toISOString()
+  audit('user.restored', 'user', user, {})
+}
 const phoneOk = (p: string | null) => !p || /^[0-9+\- ]{7,20}$/.test(p)
 
 export function makeMockApi(): Api {
   return {
     mode: 'mock',
+    client: null,
     async currentUser() {
       const s = store.get(); const id = meId()
       if (!id) return null
@@ -230,6 +286,8 @@ export function makeMockApi(): Api {
       const r = row(i.user)
       if (!r || r.status === 'pending' || r.status === 'rejected') err('המשתמש לא נמצא', 'P0002')
       if (r!.position === 'mentor' && !has('users.grant_permissions')) err('אין הרשאה: users.grant_permissions')
+      if (i.status === 'archived' && r!.status === 'active') await archive(i.user, null)
+      else if (i.status === 'active' && r!.status === 'archived') restore(i.user)
       const before = { ...r! }
       Object.assign(r!, {
         full_name: i.full_name?.trim() || r!.full_name,
@@ -238,13 +296,12 @@ export function makeMockApi(): Api {
         position: i.position ?? r!.position,
         grad_year: i.grad_year ?? r!.grad_year,
         is_admin: i.is_admin ?? r!.is_admin,
-        status: i.status ?? r!.status,
       })
       const diff: Record<string, unknown> = {}
-      for (const k of ['full_name', 'team', 'subteams', 'position', 'grad_year', 'is_admin', 'status'] as const) {
+      for (const k of ['full_name', 'team', 'subteams', 'position', 'grad_year', 'is_admin'] as const) {
         if (JSON.stringify(before[k]) !== JSON.stringify(r![k])) diff[k] = [before[k], r![k]]
       }
-      audit('user.membership_changed', 'user', i.user, diff)
+      if (Object.keys(diff).length) audit('user.membership_changed', 'user', i.user, diff)
       commit()
     },
     async setRolePermission(role, perm, on) {
@@ -265,6 +322,13 @@ export function makeMockApi(): Api {
       if (on) s.userPerms.push({ user_id: user, perm, granted_by: meId(), granted_at: new Date().toISOString() })
       audit(on ? 'perm.user_granted' : 'perm.user_revoked', 'user', user, { perm })
       commit()
+    },
+    async archiveMember(user, reason) { await wait(); await archive(user, reason); commit() },
+    async restoreMember(user) { await wait(); restore(user); commit() },
+    async archives(user) {
+      await wait()
+      if (!has('users.edit_membership')) return []
+      return store.get().archives.filter((a) => !user || a.user_id === user)
     },
   }
 }

@@ -26,7 +26,7 @@ export function Login() {
   const run = useRun()
   return (
     <Frame>
-      <h1 className="h1" style={{ textAlign: 'center' }}>NeatHub</h1>
+      <h1 className="h1" style={{ textAlign: 'center' }}>NeatSystem</h1>
       <p className="c2" style={{ textAlign: 'center', margin: '6px 0 22px' }}>המערכת של Neat Team 1943</p>
       <Button variant="white" size="lg" block onClick={() => run(() => api.signInWithGoogle())}><Google />כניסה עם Google</Button>
       <p className="foot cm" style={{ textAlign: 'center', marginTop: 14 }}>אותו חשבון כמו ב-MoneyTeam. מי שמחובר באחד, מחובר גם בשני.</p>
@@ -97,7 +97,7 @@ export function Pending({ me }: { me: Person }) {
     <Frame>
       <div className="empty" style={{ padding: '6px 0 0' }}>
         <div className="ic" style={{ background: 'var(--orange-dim)', color: 'var(--orange-hi)' }}><Clock3 size={26} /></div>
-        <h1 className="h2" style={{ color: '#fff' }}>הבקשה נשלחה</h1>
+        <h1 className="h2">הבקשה נשלחה</h1>
         <p>מנטור או אדמין יאשרו אותה בקרוב. אין צורך לעשות כלום — כשתאושר/י, פשוט תיכנס/י.</p>
       </div>
       <dl className="kv" style={{ margin: '10px 0 18px' }}>

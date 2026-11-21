@@ -1,0 +1,12 @@
+[submodule "systems/trainings"]
+	path = systems/trainings
+	url = ../StudentTracker.git
+	branch = main
+[submodule "systems/neathub"]
+	path = systems/neathub
+	url = ../NeatHub.git
+	branch = main
+[submodule "systems/moneyteam"]
+	path = systems/moneyteam
+	url = ../MoneyTeam.git
+	branch = main

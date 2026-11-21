@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # the sub-system tabs under systems/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -26,6 +28,7 @@ jobs:
           cache-dependency-path: package.json
       - run: npm install --no-audit --no-fund
       - run: npm test
+      - run: npm run test:systems
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

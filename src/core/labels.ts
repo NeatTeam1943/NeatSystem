@@ -19,6 +19,8 @@ export const ACTION_LABEL: Record<string, string> = {
   'perm.role_revoked': 'הוריד/ה הרשאה מתפקיד',
   'perm.user_granted': 'נתן/ה הרשאה נוספת',
   'perm.user_revoked': 'הוריד/ה הרשאה נוספת',
+  'user.archived': 'העביר/ה לארכיון',
+  'user.restored': 'החזיר/ה מהארכיון',
 }
 
 /**

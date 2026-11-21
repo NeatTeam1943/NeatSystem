@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { History, KeyRound, Search, Settings, ShieldCheck, Users } from 'lucide-react'
+import { AlertTriangle, Blocks, History, KeyRound, Search, Settings, ShieldCheck, Users } from 'lucide-react'
+import { TABS } from '@/app/tabs'
 import { api, type Person, type Role } from '@/core/api'
 import { invalidate, useData } from '@/core/data'
 import { gradeLabel, gradeOf, POSITION_LABEL, ROLE_LABEL, ROLES, STATUS_LABEL, teamName } from '@/core/labels'
@@ -12,7 +13,7 @@ import { Avatar, Badge, Button, Chips, Empty, Input, PageHead, Select, Sheet, Sk
 import { ExtraPermissions, MembershipForm } from '../people/forms'
 
 const canAdmin = (s: Session) => s.can('users.edit_membership') || s.can('users.grant_permissions') || s.can('audit.view')
-type Tab = 'users' | 'perms' | 'audit'
+type Tab = 'users' | 'perms' | 'audit' | 'systems'
 
 function AdminPage() {
   const s = useSession()
@@ -22,6 +23,7 @@ function AdminPage() {
     s.can('users.edit_membership') && { id: 'users', label: 'משתמשים', icon: Users },
     (s.can('users.grant_permissions') || s.can('users.edit_membership')) && { id: 'perms', label: 'טבלת הרשאות', icon: KeyRound },
     s.can('audit.view') && { id: 'audit', label: 'יומן פעולות', icon: History },
+    s.can('users.grant_permissions') && { id: 'systems', label: 'מערכות', icon: Blocks },
   ].filter(Boolean)) as { id: Tab; label: string; icon: typeof Users }[]
   const cur = (tabs.find((t) => t.id === tab) ?? tabs[0])?.id
   if (!cur) return <div className="page"><PageHead title="ניהול" /><Empty icon={Settings} title="אין לך גישה לניהול" /></div>
@@ -32,6 +34,7 @@ function AdminPage() {
       {cur === 'users' && <UsersTab />}
       {cur === 'perms' && <PermsTab />}
       {cur === 'audit' && <AuditTab />}
+      {cur === 'systems' && <SystemsTab />}
     </div>
   )
 }
@@ -223,6 +226,37 @@ function AuditTab() {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/* ---------------- systems (submodules) ---------------- */
+function SystemsTab() {
+  return (
+    <div className="stack">
+      <div className="card" style={{ padding: 8 }}>
+        <div className="list">
+          {TABS.tabs.map(({ folder, tab }) => {
+            const I = tab.icon ?? Blocks
+            return (
+              <div key={folder} className="lrow">
+                <span className="sysic"><I size={18} aria-hidden /></span>
+                <div className="main2"><div className="ttl">{tab.label}</div><div className="meta" dir="ltr" style={{ textAlign: 'end' }}>systems/{folder} · /{tab.id}{tab.profile ? ` · ${tab.profile.schema}.${tab.profile.fn}` : ''}</div></div>
+                <Badge tone="ok">פעיל</Badge>
+              </div>
+            )
+          })}
+          <div className="lrow">
+            <span className="sysic"><Blocks size={18} aria-hidden /></span>
+            <div className="main2"><div className="ttl">MoneyTeam</div><div className="meta">אתר ופרויקט נפרדים, מוצג בתוך הטאב בלי שינוי</div></div>
+            <Badge>חיצוני</Badge>
+          </div>
+        </div>
+      </div>
+      {TABS.problems.map((p) => (
+        <div key={p.folder} className="banner bad"><AlertTriangle size={18} aria-hidden /><span><b dir="ltr">systems/{p.folder}</b> לא נטען: {p.problem}</span></div>
+      ))}
+      {TABS.tabs.length === 0 && TABS.problems.length === 0 && <div className="banner info">אין עדיין מערכות. מוסיפים עם scripts/add-systems.sh (ראו README).</div>}
     </div>
   )
 }

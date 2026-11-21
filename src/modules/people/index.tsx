@@ -17,7 +17,7 @@ function Birthdays() {
     <Card mesh="orange" title={<span className="row"><Cake size={20} />יום הולדת שמח!</span>}>
       <div className="list">
         {list.map((p) => (
-          <Link key={p.id} to={`/people/${p.id}`} className="lrow click" style={{ borderColor: 'rgba(255,255,255,.2)' }}>
+          <Link key={p.id} to={`/people/${p.id}`} className="lrow click">
             <Avatar name={p.full_name} src={p.avatar_url} size={42} />
             <div className="main2"><div className="ttl">{p.full_name}</div><div className="meta">{positionText(p, s.teams)}</div></div>
           </Link>

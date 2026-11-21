@@ -10,7 +10,9 @@ import { MODULES } from './modules'
 // Hash routing: GitHub Pages has no server-side fallback, and MoneyTeam uses
 // the same approach. Login uses PKCE, whose ?code= lands in the query string,
 // so it never fights the router over the '#'.
-const router = createHashRouter([
+let router: ReturnType<typeof createHashRouter> | null = null
+// Built on first use: by then main.tsx has appended the sub-system tabs to MODULES.
+const getRouter = () => (router ??= createHashRouter([
   {
     path: '/',
     element: <Shell />,
@@ -19,7 +21,7 @@ const router = createHashRouter([
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
-])
+]))
 
 function Gate() {
   const s = useSession()
@@ -29,7 +31,7 @@ function Gate() {
     case 'needs_profile': return <Onboarding user={s.state.user} previous={s.state.previous} />
     case 'pending': return <Pending me={s.state.me} />
     case 'archived': return <Archived me={s.state.me} />
-    case 'active': return <RouterProvider router={router} />
+    case 'active': return <RouterProvider router={getRouter()} />
   }
 }
 

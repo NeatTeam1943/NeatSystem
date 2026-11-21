@@ -30,6 +30,27 @@ export interface Person {
   decided_by: string | null
   decided_at: string | null
   created_at: string
+  /** set while archived */
+  archived_at?: string | null
+  /** only for users.edit_membership */
+  archive_reason?: string | null
+}
+
+/** One frozen record made when someone left the team (hub.archives). */
+export interface ArchiveRecord {
+  id: number
+  user_id: string
+  full_name: string
+  archived_at: string
+  archived_by: string | null
+  archived_by_name: string | null
+  reason: string | null
+  /** the hub.profiles row at that moment */
+  profile: Record<string, unknown>
+  /** what every sub-system's profile function returned, by sub-system id */
+  systems: Record<string, unknown>
+  audit: unknown[]
+  restored_at: string | null
 }
 
 export interface Team {
@@ -109,6 +130,12 @@ export interface MembershipInput {
 
 export interface Api {
   readonly mode: 'supabase' | 'mock'
+  /**
+   * The Supabase client of the shared project, handed to sub-system tabs so
+   * they reuse this login. null in mock mode. Typed loosely on purpose: tabs
+   * are plain JS and only call .schema(x).rpc/.from on it.
+   */
+  readonly client: import('@supabase/supabase-js').SupabaseClient | null
   // auth
   currentUser(): Promise<SessionUser | null>
   onAuthChange(cb: () => void): () => void
@@ -129,6 +156,10 @@ export interface Api {
   updateMembership(input: MembershipInput): Promise<void>
   setRolePermission(role: Role, perm: string, on: boolean): Promise<void>
   setUserPermission(user: string, perm: string, on: boolean): Promise<void>
+  // leaving the team (hub.archive_member / hub.restore_member)
+  archiveMember(user: string, reason: string | null): Promise<void>
+  restoreMember(user: string): Promise<void>
+  archives(user?: string): Promise<ArchiveRecord[]>
 }
 
 export class ApiError extends Error {

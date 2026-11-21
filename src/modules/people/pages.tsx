@@ -10,6 +10,7 @@ import { useSession } from '@/core/session'
 import { MODULES } from '@/app/modules'
 import { Avatar, Badge, Button, Card, Chips, Empty, Input, PageHead, Sheet } from '@/ui'
 import { EditMyProfileSheet, ExtraPermissions, MembershipForm } from './forms'
+import { ArchiveRecords, SystemBlocks } from './SystemBlocks'
 
 type Filter = 'all' | 'cad' | 'build' | 'software' | 'leads' | 'mentors' | 'rookies'
 const FILTERS: { id: Filter; label: string }[] = [
@@ -110,7 +111,7 @@ export function ProfilePage() {
           {canEdit && <Button icon={UserCog} variant="tint" onClick={() => setSheet('membership')}>עריכת חברות</Button>}
           {s.can('users.grant_permissions') && p.status === 'active' && <Button icon={KeyRound} variant="tint" onClick={() => setSheet('perms')}>הרשאות</Button>}
         </>} />
-      {p.status !== 'active' && <div className={'banner ' + (p.status === 'archived' ? 'warn' : 'info')} style={{ marginBottom: 14 }}>{STATUS_LABEL[p.status]}</div>}
+      {p.status !== 'active' && <div className={'banner ' + (p.status === 'archived' ? 'warn' : 'info')} style={{ marginBottom: 14 }}>{STATUS_LABEL[p.status]}{p.status === 'archived' && p.archived_at ? ` מאז ${fmtDay(p.archived_at)}${p.archive_reason ? ` · ${p.archive_reason}` : ''}. אין לו/ה גישה לאף מערכת; כל המידע נשמר.` : ''}</div>}
       <div className="grid2">
         <div className="stack">
           <Card mesh="blue" className="idcard">
@@ -119,11 +120,11 @@ export function ProfilePage() {
               <div className="grow">
                 <div className="h2">{p.full_name}</div>
                 {p.nickname && <div className="c2">"{p.nickname}"</div>}
-                <div className="w7" style={{ color: '#ffd1b8', marginTop: 4 }}>{p.position ? POSITION_LABEL[p.position] : ''}{p.team && p.position !== 'mentor' ? ` · ${teamName(s.teams, p.team)}` : ''}</div>
+                <div className="w7" style={{ color: 'var(--reward-text)', marginTop: 4 }}>{p.position ? POSITION_LABEL[p.position] : ''}{p.team && p.position !== 'mentor' ? ` · ${teamName(s.teams, p.team)}` : ''}</div>
                 <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
-                  {grade && <span className="badge" style={{ background: 'rgba(255,255,255,.16)', color: '#fff' }}>כיתה {gradeLabel(grade)}</span>}
-                  {p.is_admin && <span className="badge" style={{ background: 'rgba(255,255,255,.16)', color: '#fff' }}><ShieldCheck size={13} />אדמין</span>}
-                  {p.subteams.map((t) => <span key={t} className="badge" style={{ background: 'rgba(255,255,255,.16)', color: '#fff' }}>{teamName(s.teams, t)}</span>)}
+                  {grade && <span className="badge brand">כיתה {gradeLabel(grade)}</span>}
+                  {p.is_admin && <span className="badge brand"><ShieldCheck size={13} />אדמין</span>}
+                  {p.subteams.map((t) => <span key={t} className="badge brand">{teamName(s.teams, t)}</span>)}
                 </div>
               </div>
             </div>
@@ -141,12 +142,8 @@ export function ProfilePage() {
         </div>
         <div className="stack">
           {sections.map((x) => <x.Component key={x.id} person={p} />)}
-          {sections.length === 0 && (
-            <Card mesh="dark">
-              <div className="w7">כאן יופיעו ההסמכות והדרגה</div>
-              <div className="foot c2">כשמודול ההכשרות יתחבר (משימה 2), הוא יוסיף את החלק הזה לפרופיל בלי לשנות את הדף.</div>
-            </Card>
-          )}
+          <SystemBlocks person={p} />
+          {p.status === 'archived' && <ArchiveRecords person={p} />}
           {canAudit && (
             <Card title="פעולות אחרונות">
               {log.loading ? <div className="skel" style={{ height: 80 }} /> : (log.data ?? []).length === 0 ? <div className="foot c2">אין פעולות</div> : (
