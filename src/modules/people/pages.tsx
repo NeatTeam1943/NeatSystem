@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Cake, KeyRound, Mail, Pencil, Phone, Search, ShieldCheck, UserCog, Users, Wrench } from 'lucide-react'
+import { Cake, KeyRound, Mail, Pencil, Phone, Search, ShieldCheck, UserCog, UserPlus, Users, Wrench } from 'lucide-react'
 import { api, type Person } from '@/core/api'
 import { useData } from '@/core/data'
 import { displayName, gradeLabel, gradeOf, POSITION_LABEL, positionText, STATUS_LABEL, teamName } from '@/core/labels'
@@ -9,19 +9,19 @@ import { auditText } from '@/core/auditText'
 import { useSession } from '@/core/session'
 import { MODULES } from '@/app/modules'
 import { Avatar, Badge, Button, Card, Chips, Empty, Input, PageHead, Sheet } from '@/ui'
-import { EditMyProfileSheet, ExtraPermissions, MembershipForm } from './forms'
+import { EditMyProfileSheet, ExtraPermissions, InviteSheet, MembershipForm } from './forms'
 import { ArchiveRecords, SystemBlocks } from './SystemBlocks'
 
-type Filter = 'all' | 'cad' | 'build' | 'software' | 'leads' | 'mentors' | 'rookies'
+type Filter = 'all' | 'cad' | 'build' | 'software' | 'leads' | 'mentors' | 'invited'
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'הכל' }, { id: 'cad', label: 'שרטוט' }, { id: 'build', label: 'בנייה' }, { id: 'software', label: 'תוכנה' },
-  { id: 'leads', label: 'רש"צים וקפטנים' }, { id: 'mentors', label: 'מנטורים' }, { id: 'rookies', label: 'רוקים' },
+  { id: 'leads', label: 'רש"צים וקפטנים' }, { id: 'mentors', label: 'מנטורים' },
 ]
 const match = (p: Person, f: Filter) =>
   f === 'all' ? true
     : f === 'leads' ? p.position === 'team_lead' || p.position === 'captain'
       : f === 'mentors' ? p.position === 'mentor'
-        : f === 'rookies' ? p.position === 'rookie'
+        : f === 'invited' ? !!p.invited
           : p.team === f
 
 export function PeoplePage() {
@@ -31,6 +31,10 @@ export function PeoplePage() {
   const f = (sp.get('f') as Filter) || 'all'
   const q = sp.get('q') ?? ''
   const set = (k: string, v: string) => setSp((p) => { const n = new URLSearchParams(p); if (v && v !== 'all') n.set(k, v); else n.delete(k); return n }, { replace: true })
+  const [adding, setAdding] = useState(false)
+  const canAdd = s.can('users.edit_membership')
+  const invitedCount = s.people.filter((p) => p.status === 'active' && p.invited).length
+  const filters = canAdd && invitedCount ? [...FILTERS, { id: 'invited' as Filter, label: `עוד לא התחברו · ${invitedCount}` }] : FILTERS
 
   const list = useMemo(() => s.people
     .filter((p) => p.status === 'active' && match(p, f))
@@ -49,13 +53,14 @@ export function PeoplePage() {
 
   return (
     <div className="page">
-      <PageHead title="חברי הקבוצה" sub={`${s.people.filter((p) => p.status === 'active').length} פעילים`} />
+      <PageHead title="חברי הקבוצה" sub={`${s.people.filter((p) => p.status === 'active').length} פעילים`}
+        actions={canAdd ? <Button icon={UserPlus} variant="primary" onClick={() => setAdding(true)}>הוספת חבר/ה</Button> : undefined} />
       <div className="stack" style={{ marginBottom: 18 }}>
         <div style={{ position: 'relative', maxWidth: 420 }}>
           <Input aria-label="חיפוש לפי שם" placeholder="חיפוש לפי שם…" value={q} onChange={(e) => set('q', e.target.value)} style={{ paddingInlineStart: 40 }} />
           <Search size={18} className="cm" style={{ position: 'absolute', insetInlineStart: 13, top: 14 }} aria-hidden />
         </div>
-        <Chips label="סינון" value={f} onChange={(v) => set('f', v)} items={FILTERS} />
+        <Chips label="סינון" value={f} onChange={(v) => set('f', v)} items={filters} />
       </div>
       {list.length === 0 && <Empty icon={Users} title="אין תוצאות">נסו סינון אחר</Empty>}
       {groups.map(([k, ps]) => (
@@ -66,6 +71,7 @@ export function PeoplePage() {
           </div>
         </section>
       ))}
+      {adding && <InviteSheet onClose={() => setAdding(false)} />}
     </div>
   )
 }
@@ -78,8 +84,9 @@ function PersonCard({ p }: { p: Person }) {
       <div className="grow">
         <div className="w7" style={{ fontSize: 16 }}>{displayName(p)}{p.nickname && <span className="cm w5"> · {p.nickname}</span>}</div>
         <div className="foot c2">{positionText(p, s.teams)}</div>
-        {(p.subteams.length > 0 || p.is_admin) && (
+        {(p.subteams.length > 0 || p.is_admin || p.invited) && (
           <div className="row wrap" style={{ gap: 4, marginTop: 6 }}>
+            {p.invited && <Badge tone="warn">עוד לא התחבר/ה</Badge>}
             {p.is_admin && <Badge tone="blue">אדמין</Badge>}
             {p.subteams.map((t) => <Badge key={t}>{teamName(s.teams, t)}</Badge>)}
           </div>
@@ -111,6 +118,7 @@ export function ProfilePage() {
           {canEdit && <Button icon={UserCog} variant="tint" onClick={() => setSheet('membership')}>עריכת חברות</Button>}
           {s.can('users.grant_permissions') && p.status === 'active' && <Button icon={KeyRound} variant="tint" onClick={() => setSheet('perms')}>הרשאות</Button>}
         </>} />
+      {p.invited && <div className="banner info" style={{ marginBottom: 14 }}>עוד לא התחבר/ה{p.email ? ` · ${p.email}` : ''}</div>}
       {p.status !== 'active' && <div className={'banner ' + (p.status === 'archived' ? 'warn' : 'info')} style={{ marginBottom: 14 }}>{STATUS_LABEL[p.status]}{p.status === 'archived' && p.archived_at ? ` מאז ${fmtDay(p.archived_at)}${p.archive_reason ? ` · ${p.archive_reason}` : ''}. אין לו/ה גישה לאף מערכת; כל המידע נשמר.` : ''}</div>}
       <div className="grid2">
         <div className="stack">
@@ -137,7 +145,6 @@ export function ProfilePage() {
               {p.email && <><dt><Mail size={16} />מייל</dt><dd dir="ltr" style={{ textAlign: 'end', overflowWrap: 'anywhere' }}>{p.email}</dd></>}
               {p.grad_year && <><dt>שנתון</dt><dd>{p.grad_year}</dd></>}
             </dl>
-            {!p.phone && !self && <p className="foot cm" style={{ margin: '12px 0 0' }}>טלפון ותאריך לידה מלא מוצגים רק למי שיש לו הרשאה.</p>}
           </Card>
         </div>
         <div className="stack">

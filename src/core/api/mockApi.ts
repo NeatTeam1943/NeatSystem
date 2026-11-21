@@ -62,9 +62,10 @@ function seed(): Row[] {
     P('u13', 'אורי ברק', { team: 'cad', grad_year: 2029, birth_date: '2010-10-10' }),
     P('u14', 'הילה שמש', { team: 'software', grad_year: 2028, birth_date: '2009-09-19', subteams: ['media'] }),
     P('u15', 'יונתן רוזן', { position: 'member', team: 'build', grad_year: 2027, birth_date: '2008-07-07', status: 'archived', archived_at: '2026-11-14T19:02:00Z', archive_reason: 'סיים י״ב' }),
-    P('u16', 'נדב שלום', { position: 'rookie', team: 'build', grad_year: 2030, birth_date: '2011-04-04' }),
-    P('u17', 'עדי פרידמן', { position: 'rookie', team: 'software', grad_year: 2030, birth_date: '2011-02-14' }),
-    P('u18', 'בר אלון', { position: 'rookie', team: 'cad', grad_year: 2030, birth_date: '2011-06-06' }),
+    P('u16', 'נדב שלום', { position: 'member', team: 'build', grad_year: 2030, birth_date: '2011-04-04' }),
+    P('u17', 'עדי פרידמן', { position: 'member', team: 'software', grad_year: 2030, birth_date: '2011-02-14' }),
+    P('u18', 'בר אלון', { position: 'member', team: 'cad', grad_year: 2030, birth_date: '2011-06-06' }),
+    P('u21', 'עמית ברגר', { position: 'member', team: 'build', grad_year: 2030, birth_date: null, phone: null, invited: true, email: 'amit.berger@example.com' }),
     P('u19', 'דניאל קורן', { position: null, status: 'pending', requested_team: 'build', grad_year: 2030, birth_date: '2011-03-03', join_note: 'אחי היה בקבוצה, אני רוצה לבנות!', decided_by: null, decided_at: null, created_at: '2026-11-16T07:30:00Z' }),
     P('u20', 'רותם אלון', { position: null, status: 'pending', requested_team: 'software', grad_year: 2030, birth_date: '2011-09-09', join_note: null, decided_by: null, decided_at: null, created_at: '2026-11-15T18:10:00Z' }),
   ]
@@ -76,14 +77,14 @@ export const PERSONAS: { id: string; label: string }[] = [
   { id: 'u3', label: 'קפטנית + אדמין — נועה' },
   { id: 'u6', label: 'רש"צ בנייה — איתי' },
   { id: 'u12', label: 'חבר צוות תוכנה — גל' },
-  { id: 'u16', label: 'רוקי בנייה — נדב' },
+  { id: 'u16', label: 'חבר צוות בנייה — נדב' },
   { id: 'u19', label: 'ממתין לאישור — דניאל' },
   { id: 'new', label: 'נכנס בפעם הראשונה' },
   { id: 'out', label: 'לא מחובר' },
 ]
 
 const store = (() => {
-  const key = 'neathub.mock.v1'
+  const key = 'neathub.mock.v2'
   const fresh = () => ({
     rows: seed(), rolePerms: [...ROLE_PERMS], userPerms: [] as UserPerm[], audit: [] as AuditEntry[], archives: [] as ArchiveRecord[],
     me: 'u1' as string, newUser: null as null | { id: string; email: string; name: string },
@@ -143,7 +144,8 @@ function visible(r: Row): Person | null {
     join_note: self || has('users.approve') ? r.join_note : null,
     phone: self || has('users.view_phone') ? r.phone : null,
     birth_date: self || has('users.view_private') ? r.birth_date : null,
-    email: self || has('users.view_private') || has('users.approve') ? r.email : null,
+    email: self || has('users.view_private') || has('users.approve') || (r.invited && has('users.edit_membership')) ? r.email : null,
+    invited: !!r.invited,
     birthday: r.birth_date ? r.birth_date.slice(5) : null,
   }
 }
@@ -257,8 +259,8 @@ export function makeMockApi(): Api {
       const r = row(i.user)
       if (!r || r.status !== 'pending') err('הבקשה כבר טופלה או לא קיימת', 'P0002')
       if (i.approve) {
-        const pos: Position = i.position ?? 'rookie'
-        if (pos !== 'rookie' && !has('users.edit_membership')) err('אין הרשאה לקבוע תפקיד')
+        const pos: Position = i.position ?? 'member'
+        if (pos !== 'member' && !has('users.edit_membership')) err('אין הרשאה לקבוע תפקיד')
         if (pos === 'mentor' && !has('users.grant_permissions')) err('רק מי שמחלק הרשאות יכול לצרף מנטור')
         Object.assign(r!, { status: 'active', team: i.team ?? r!.requested_team, position: pos, grad_year: i.grad_year ?? r!.grad_year, decided_by: meId(), decided_at: new Date().toISOString() })
         audit('user.approved', 'user', i.user, { team: r!.team, position: pos })
@@ -323,6 +325,44 @@ export function makeMockApi(): Api {
       audit(on ? 'perm.user_granted' : 'perm.user_revoked', 'user', user, { perm })
       commit()
     },
+    async inviteMember(i) {
+      await wait()
+      if (!has('users.edit_membership')) err('אין הרשאה: users.edit_membership')
+      if (i.position === 'mentor' && !has('users.grant_permissions')) err('אין הרשאה: users.grant_permissions')
+      const email = i.email.trim().toLowerCase()
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) err('מייל לא תקין', '22023')
+      if (!phoneOk(i.phone)) err('מספר טלפון לא תקין', '23514')
+      const s = store.get()
+      if (s.rows.some((r) => r.email.toLowerCase() === email)) err('כבר יש חבר/ה עם המייל הזה', '23505')
+      const id = `inv-${Date.now().toString(36)}`
+      s.rows.push(P(id, i.full_name.trim(), { email, team: i.team, position: i.position, grad_year: i.grad_year, phone: i.phone, subteams: i.subteams, birth_date: null, invited: true, decided_by: meId(), decided_at: new Date().toISOString(), created_at: new Date().toISOString() }))
+      audit('user.invited', 'user', id, { team: i.team, position: i.position })
+      commit()
+      return id
+    },
+    async updateInvite(user, email, phone, birth_date) {
+      await wait()
+      if (!has('users.edit_membership')) err('אין הרשאה: users.edit_membership')
+      const r = row(user)
+      if (!r || !r.invited) err('אפשר לערוך כאן רק מי שעוד לא התחבר/ה', 'P0002')
+      const e = email.trim().toLowerCase()
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) err('מייל לא תקין', '22023')
+      if (store.get().rows.some((x) => x.id !== user && x.email.toLowerCase() === e)) err('כבר יש פרופיל עם המייל הזה', '23505')
+      if (!phoneOk(phone)) err('מספר טלפון לא תקין', '23514')
+      Object.assign(r!, { email: e, phone: phone || null, birth_date: birth_date || null })
+      audit('user.invite_edited', 'user', user, {})
+      commit()
+    },
+    async claimMyProfile() {
+      const s = store.get()
+      if (s.me !== 'new' && meId() !== 'u-new') return false
+      const inv = s.rows.find((r) => r.invited && r.email.toLowerCase() === (s.newUser?.email ?? '').toLowerCase())
+      if (!inv) return false
+      s.rows = s.rows.filter((r) => r.id !== 'u-new')
+      Object.assign(inv, { id: 'u-new', invited: false })
+      commit()
+      return true
+    },
     async archiveMember(user, reason) { await wait(); await archive(user, reason); commit() },
     async restoreMember(user) { await wait(); restore(user); commit() },
     async archives(user) {
@@ -340,7 +380,7 @@ export function makeMockApi(): Api {
   const at = (d: string) => new Date(d).toISOString()
   s.audit = [
     { id: 3, at: at('2026-11-14T19:02:00Z'), actor: 'u1', actor_name: 'דנה לוי', action: 'user.membership_changed', target_type: 'user', target_id: 'u15', details: { status: ['active', 'archived'] } },
-    { id: 2, at: at('2026-11-10T17:40:00Z'), actor: 'u3', actor_name: 'נועה ברק', action: 'user.approved', target_type: 'user', target_id: 'u18', details: { team: 'cad', position: 'rookie' } },
+    { id: 2, at: at('2026-11-10T17:40:00Z'), actor: 'u3', actor_name: 'נועה ברק', action: 'user.approved', target_type: 'user', target_id: 'u18', details: { team: 'cad', position: 'member' } },
     { id: 1, at: at('2026-11-02T16:15:00Z'), actor: 'u1', actor_name: 'דנה לוי', action: 'perm.role_granted', target_type: 'role', target_id: 'team_lead', details: { perm: 'users.view_phone' } },
   ]
 })()

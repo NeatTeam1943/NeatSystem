@@ -1,11 +1,13 @@
 import type { Person, Position, Role, Team } from './api'
 
 export const POSITION_LABEL: Record<Position, string> = {
-  rookie: 'רוקי', member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית',
+  member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית',
 }
+/** positions that only appear in old history */
+export const OLD_POSITION_LABEL: Record<string, string> = { rookie: 'רוקי' }
 export const ROLE_LABEL: Record<Role, string> = { ...POSITION_LABEL, admin: 'אדמין' }
-export const POSITIONS: Position[] = ['rookie', 'member', 'team_lead', 'captain', 'mentor']
-export const ROLES: Role[] = ['rookie', 'member', 'team_lead', 'captain', 'admin', 'mentor']
+export const POSITIONS: Position[] = ['member', 'team_lead', 'captain', 'mentor']
+export const ROLES: Role[] = ['member', 'team_lead', 'captain', 'admin', 'mentor']
 export const STATUS_LABEL = { pending: 'ממתין/ה לאישור', active: 'פעיל/ה', rejected: 'נדחה', archived: 'בארכיון' } as const
 
 export const ACTION_LABEL: Record<string, string> = {
@@ -21,6 +23,10 @@ export const ACTION_LABEL: Record<string, string> = {
   'perm.user_revoked': 'הוריד/ה הרשאה נוספת',
   'user.archived': 'העביר/ה לארכיון',
   'user.restored': 'החזיר/ה מהארכיון',
+  'user.invited': 'הוסיף/ה מראש',
+  'user.invite_edited': 'ערך/ה פרטים של מי שעוד לא התחבר/ה',
+  'user.claimed': 'התחבר/ה בפעם הראשונה',
+  'user.claim_failed': 'העברת רשומות נכשלה',
 }
 
 /**

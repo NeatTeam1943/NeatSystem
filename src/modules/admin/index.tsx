@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Blocks, History, KeyRound, Search, Settings, ShieldCheck, Users } from 'lucide-react'
 import { TABS } from '@/app/tabs'
@@ -11,6 +11,7 @@ import type { HubModule } from '@/core/module'
 import { useSession, type Session } from '@/core/session'
 import { Avatar, Badge, Button, Chips, Empty, Input, PageHead, Select, Sheet, Skeleton, Switch, Tabs, useRun } from '@/ui'
 import { ExtraPermissions, MembershipForm } from '../people/forms'
+import { permSections } from '@/core/permSections'
 
 const canAdmin = (s: Session) => s.can('users.edit_membership') || s.can('users.grant_permissions') || s.can('audit.view')
 type Tab = 'users' | 'perms' | 'audit' | 'systems'
@@ -86,7 +87,7 @@ function UsersTab() {
               <tbody>
                 {list.map((p) => (
                   <tr key={p.id} className={sel === p.id ? 'sel' : ''} onClick={() => setSel(p.id)} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSel(p.id)}>
-                    <td><div className="row"><Avatar name={p.full_name} src={p.avatar_url} size={30} /><span className="w7">{p.full_name}</span>{p.is_admin && <Badge tone="blue">אדמין</Badge>}</div></td>
+                    <td><div className="row"><Avatar name={p.full_name} src={p.avatar_url} size={30} /><span className="w7">{p.full_name}</span>{p.is_admin && <Badge tone="blue">אדמין</Badge>}{p.invited && <Badge tone="warn">עוד לא התחבר/ה</Badge>}</div></td>
                     <td>{p.position ? POSITION_LABEL[p.position] : STATUS_LABEL[p.status]}</td>
                     <td>{teamName(s.teams, p.team) || <span className="cm">—</span>}</td>
                     <td className="tnum">{gradeLabel(gradeOf(p.grad_year)) || <span className="cm">—</span>}</td>
@@ -131,7 +132,7 @@ function UserPanel({ p, onClose }: { p: Person; onClose: () => void }) {
   )
 }
 
-/* ---------------- permission matrix ---------------- */
+/* ---------------- permission matrix: one page, a section per system ---------------- */
 function PermsTab() {
   const s = useSession()
   const run = useRun()
@@ -145,51 +146,44 @@ function PermsTab() {
   const toggle = async (r: Role, k: string, v: boolean) => {
     if (await run(() => api.setRolePermission(r, k, v), `${ROLE_LABEL[r]}: ${v ? 'נוספה' : 'הוסרה'} הרשאה`)) invalidate()
   }
-  const groups = [...new Set((perms.data ?? []).map((p) => p.grp))]
+  const sections = permSections(perms.data ?? [])
   return (
     <>
-      <p className="c2 foot" style={{ margin: '0 2px 14px' }}>
-        מה כל תפקיד יכול לעשות. אדמין הוא תוספת לתפקיד. הרשאה לאדם אחד נותנים מעמוד המשתמש.
-        {!editable && ' רק מנטורים יכולים לשנות את הטבלה.'}
-      </p>
-      {/* desktop matrix */}
-      <div className="tablewrap only-desk">
-        <table className="table matrix">
-          <thead><tr><th>הרשאה</th>{ROLES.map((r) => <th key={r} style={{ textAlign: 'center' }}>{ROLE_LABEL[r]}</th>)}</tr></thead>
-          <tbody>
-            {groups.map((g) => (
-              <Fragment key={g}>
-                <tr className="grp"><td colSpan={ROLES.length + 1} className="w7 cr foot">{g}</td></tr>
-                {(perms.data ?? []).filter((p) => p.grp === g).map((p) => (
+      {!editable && <div className="banner info" style={{ marginBottom: 14 }}>רק מנטורים משנים את הטבלה.</div>}
+      <div className="only-phone" style={{ marginBottom: 12 }}>
+        <Chips label="תפקיד" value={role} onChange={setRole} items={ROLES.map((r) => ({ id: r, label: ROLE_LABEL[r] }))} />
+      </div>
+      {sections.map((sec) => (
+        <section key={sec.module} style={{ marginBottom: 22 }}>
+          <h2 className="h3 row" style={{ margin: '0 2px 10px' }}><sec.icon size={18} aria-hidden />{sec.label}</h2>
+          {/* desktop matrix */}
+          <div className="tablewrap only-desk">
+            <table className="table matrix" style={{ tableLayout: 'fixed' }}>
+              <colgroup><col style={{ width: '38%' }} />{ROLES.map((r) => <col key={r} />)}</colgroup>
+              <thead><tr><th>הרשאה</th>{ROLES.map((r) => <th key={r} style={{ textAlign: 'center' }}>{ROLE_LABEL[r]}</th>)}</tr></thead>
+              <tbody>
+                {sec.perms.map((p) => (
                   <tr key={p.key}>
                     <td><div className="w5">{p.label}</div><div className="cap cm" dir="ltr" style={{ textAlign: 'end' }}>{p.key}</div></td>
                     {ROLES.map((r) => <td key={r} style={{ textAlign: 'center' }}><Switch label={`${ROLE_LABEL[r]} · ${p.label}`} on={on(r, p.key)} disabled={!editable || locked(r, p.key)} onChange={(v) => toggle(r, p.key, v)} /></td>)}
                   </tr>
                 ))}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {/* phone: one role at a time */}
-      <div className="only-phone">
-        <Chips label="תפקיד" value={role} onChange={setRole} items={ROLES.map((r) => ({ id: r, label: ROLE_LABEL[r] }))} />
-        <div className="card" style={{ marginTop: 12 }}>
-          {groups.map((g) => (
-            <div key={g}>
-              <div className="w7 cr foot" style={{ margin: '6px 4px' }}>{g}</div>
-              <div className="list">
-                {(perms.data ?? []).filter((p) => p.grp === g).map((p) => (
-                  <div key={p.key} className="lrow">
-                    <div className="main2"><div className="ttl">{p.label}</div></div>
-                    <Switch label={p.label} on={on(role, p.key)} disabled={!editable || locked(role, p.key)} onChange={(v) => toggle(role, p.key, v)} />
-                  </div>
-                ))}
-              </div>
+              </tbody>
+            </table>
+          </div>
+          {/* phone: one role at a time */}
+          <div className="only-phone card">
+            <div className="list">
+              {sec.perms.map((p) => (
+                <div key={p.key} className="lrow">
+                  <div className="main2"><div className="ttl">{p.label}</div></div>
+                  <Switch label={p.label} on={on(role, p.key)} disabled={!editable || locked(role, p.key)} onChange={(v) => toggle(role, p.key, v)} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </section>
+      ))}
     </>
   )
 }

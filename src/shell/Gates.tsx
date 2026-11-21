@@ -29,7 +29,6 @@ export function Login() {
       <h1 className="h1" style={{ textAlign: 'center' }}>NeatSystem</h1>
       <p className="c2" style={{ textAlign: 'center', margin: '6px 0 22px' }}>המערכת של Neat Team 1943</p>
       <Button variant="white" size="lg" block onClick={() => run(() => api.signInWithGoogle())}><Google />כניסה עם Google</Button>
-      <p className="foot cm" style={{ textAlign: 'center', marginTop: 14 }}>אותו חשבון כמו ב-MoneyTeam. מי שמחובר באחד, מחובר גם בשני.</p>
     </Frame>
   )
 }

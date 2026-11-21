@@ -92,7 +92,7 @@ export function makeSupabaseApi(url: string, anonKey: string): Api {
       p_full_name: i.full_name, p_phone: i.phone, p_birth_date: i.birth_date, p_grad_year: i.grad_year, p_team: i.team, p_note: i.note,
     }),
     decideJoin: (i) => rpc('decide_join', {
-      p_user: i.user, p_approve: i.approve, p_team: i.team ?? null, p_position: i.position ?? 'rookie', p_grad_year: i.grad_year ?? null, p_reason: i.reason ?? null,
+      p_user: i.user, p_approve: i.approve, p_team: i.team ?? null, p_position: i.position ?? 'member', p_grad_year: i.grad_year ?? null, p_reason: i.reason ?? null,
     }),
     updateMyProfile: (i) => rpc('update_my_profile', {
       p_nickname: i.nickname, p_phone: i.phone, p_birth_date: i.birth_date, p_fav_tool: i.fav_tool, p_avatar_url: i.avatar_url ?? null,
@@ -103,6 +103,19 @@ export function makeSupabaseApi(url: string, anonKey: string): Api {
       p_is_admin: i.is_admin ?? null, p_status: i.status ?? null,
     }),
     setRolePermission: (role, perm, on) => rpc('set_role_permission', { p_role: role, p_perm: perm, p_on: on }),
+    async inviteMember(i) {
+      const { data, error } = await hub().rpc('invite_member', {
+        p_email: i.email, p_full_name: i.full_name, p_team: i.team, p_position: i.position, p_grad_year: i.grad_year, p_phone: i.phone, p_subteams: i.subteams,
+      })
+      if (error) fail(error)
+      return data as string
+    },
+    updateInvite: (user, email, phone, birth_date) => rpc('update_invite', { p_user: user, p_email: email, p_phone: phone, p_birth_date: birth_date }),
+    async claimMyProfile() {
+      const { data, error } = await hub().rpc('claim_my_profile')
+      if (error) return false
+      return !!data
+    },
     setUserPermission: (user, perm, on) => rpc('set_user_permission', { p_user: user, p_perm: perm, p_on: on }),
     archiveMember: async (user, reason) => {
       const { error } = await hub().rpc('archive_member', { p_user: user, p_reason: reason })

@@ -5,7 +5,7 @@ const api = makeMockApi()
 beforeEach(() => resetMock())
 
 describe('mock rules', () => {
-  it('a rookie cannot approve join requests', async () => {
+  it('a member cannot approve join requests', async () => {
     setMockPersona('u16')
     await expect(api.decideJoin({ user: 'u19', approve: true })).rejects.toThrow('אין הרשאה')
   })

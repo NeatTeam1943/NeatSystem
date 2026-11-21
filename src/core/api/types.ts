@@ -1,7 +1,7 @@
 // Domain types shared by the Supabase and mock implementations.
 // They mirror supabase/migrations/0001_hub_core.sql (view hub.people etc).
 
-export type Position = 'rookie' | 'member' | 'team_lead' | 'captain' | 'mentor'
+export type Position = 'member' | 'team_lead' | 'captain' | 'mentor'
 export type Status = 'pending' | 'active' | 'rejected' | 'archived'
 export type Role = Position | 'admin'
 
@@ -34,6 +34,8 @@ export interface Person {
   archived_at?: string | null
   /** only for users.edit_membership */
   archive_reason?: string | null
+  /** added by a mentor ahead of time; hasn't signed in yet */
+  invited?: boolean
 }
 
 /** One frozen record made when someone left the team (hub.archives). */
@@ -116,6 +118,17 @@ export interface MyProfileInput {
   avatar_url?: string | null
 }
 
+/** A profile made ahead of time (hub.invite_member). */
+export interface InviteInput {
+  email: string
+  full_name: string
+  team: string | null
+  position: Position
+  grad_year: number | null
+  phone: string | null
+  subteams: string[]
+}
+
 export interface MembershipInput {
   user: string
   full_name?: string
@@ -155,6 +168,11 @@ export interface Api {
   updateMyProfile(input: MyProfileInput): Promise<void>
   updateMembership(input: MembershipInput): Promise<void>
   setRolePermission(role: Role, perm: string, on: boolean): Promise<void>
+  // profiles made ahead of time: claimed automatically when that email signs in
+  inviteMember(input: InviteInput): Promise<string>
+  updateInvite(user: string, email: string, phone: string | null, birth_date: string | null): Promise<void>
+  /** an invited profile with my login's email becomes mine; true if one did */
+  claimMyProfile(): Promise<boolean>
   setUserPermission(user: string, perm: string, on: boolean): Promise<void>
   // leaving the team (hub.archive_member / hub.restore_member)
   archiveMember(user: string, reason: string | null): Promise<void>

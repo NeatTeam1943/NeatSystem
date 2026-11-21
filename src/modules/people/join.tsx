@@ -43,7 +43,7 @@ function ApproveSheet({ p, onClose, done }: { p: Person; onClose: () => void; do
   const s = useSession()
   const run = useRun()
   const [team, setTeam] = useState(p.requested_team ?? '')
-  const [pos, setPos] = useState<Position>('rookie')
+  const [pos, setPos] = useState<Position>('member')
   const [year, setYear] = useState(p.grad_year ?? 0)
   const [busy, setBusy] = useState(false)
   const canRole = s.can('users.edit_membership')
@@ -71,7 +71,7 @@ function ApproveSheet({ p, onClose, done }: { p: Person; onClose: () => void; do
           )}</Field>
           <Field label="תפקיד" hint={canRole ? undefined : 'רק מי שעורך חברות יכול לקבוע תפקיד אחר'}>{(id) => (
             <Select id={id} value={pos} disabled={!canRole} onChange={(e) => setPos(e.target.value as Position)}>
-              {(['rookie', 'member', 'team_lead', 'captain', ...(s.can('users.grant_permissions') ? ['mentor'] : [])] as Position[]).map((x) => <option key={x} value={x}>{POSITION_LABEL[x]}</option>)}
+              {(['member', 'team_lead', 'captain', ...(s.can('users.grant_permissions') ? ['mentor'] : [])] as Position[]).map((x) => <option key={x} value={x}>{POSITION_LABEL[x]}</option>)}
             </Select>
           )}</Field>
           <Field label="שנתון">{(id) => (

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { api, type Person, type SessionUser, type Team } from './api'
 import { invalidate, useData } from './data'
 
@@ -44,6 +44,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (me.status === 'archived') return { ...base, state: { kind: 'archived', user: u, me }, me }
     return { ...base, state: { kind: 'active', user: u, me }, me }
   }, [user.loading, user.data, people.loading, people.data, perms.loading, perms.data, teams.loading, teams.data])
+
+  // a mentor may have added this email ahead of time: take that profile (once per login)
+  const claimed = useRef<string | null>(null)
+  const k = value.state.kind
+  useEffect(() => {
+    if ((k !== 'needs_profile' && k !== 'pending') || !uid || claimed.current === uid) return
+    claimed.current = uid
+    void api.claimMyProfile().then((ok) => { if (ok) invalidate() })
+  }, [k, uid])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

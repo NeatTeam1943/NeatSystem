@@ -13,7 +13,7 @@ insert into hub.profiles (id, email, full_name, position, is_admin, status, team
   (t.id('admin'),  'admin@x.com',  'אדמין קפטן', 'captain',   true,  'active', 'software', '050-1111111', '2008-03-02'),
   (t.id('lead'),   'lead@x.com',   'רשצית',      'team_lead', false, 'active', 'build',    '050-2222222', '2008-05-06'),
   (t.id('member'), 'member@x.com', 'חבר צוות',   'member',    false, 'active', 'build',    '050-3333333', '2009-07-08'),
-  (t.id('rookie'), 'rookie@x.com', 'רוקי',       'rookie',    false, 'active', 'build',    null,          null);
+  (t.id('rookie'), 'rookie@x.com', 'חדשה',       'member',    false, 'active', 'build',    null,          null);
 
 set role authenticated;
 
@@ -34,8 +34,8 @@ select t.eq(t.err($$select hub.decide_join(t.id('newbie'), true)$$), '42501', 'm
 
 select t.login(t.id('mentor'));
 select t.eq((select join_note from hub.people where id = t.id('newbie')), 'רוצה לבנות רובוטים', 'mentor sees request + note');
-select hub.decide_join(t.id('newbie'), true, null, 'rookie', null);
-select t.eq((select status::text || '/' || team || '/' || position::text from hub.people where id = t.id('newbie')), 'active/cad/rookie', 'approved with requested team');
+select hub.decide_join(t.id('newbie'), true, null, 'member', null);
+select t.eq((select status::text || '/' || team || '/' || position::text from hub.people where id = t.id('newbie')), 'active/cad/member', 'approved with requested team');
 select t.eq(t.err($$select hub.decide_join(t.id('newbie'), true)$$), 'P0002', 'cannot decide twice');
 
 select t.login(t.id('newbie'));
@@ -69,7 +69,7 @@ select t.eq((select birth_date from hub.people where id = t.id('member')), null:
 select t.eq(t.err($$select * from hub.profiles$$), '42501', 'no direct select on profiles');
 select t.eq(t.err($$update hub.profiles set full_name = 'hack'$$), '42501', 'no direct update on profiles');
 select t.eq(t.err($$insert into hub.audit_log (action) values ('x')$$), '42501', 'no direct insert into audit');
-select t.eq(t.err($$insert into hub.role_permissions values ('rookie', 'audit.view')$$), '42501', 'no direct write to matrix');
+select t.eq(t.err($$insert into hub.role_permissions values ('member', 'audit.view')$$), '42501', 'no direct write to matrix');
 select t.eq(t.err($$select hub.audit('x', null, null)$$), '42501', 'audit() is internal');
 select t.eq(t.err($$select hub.bootstrap_mentor('member@x.com', 'x')$$), '42501', 'bootstrap is internal');
 
@@ -91,8 +91,10 @@ select t.eq(t.err($$select hub.update_membership(t.id('mentor'), p_full_name => 
 select t.eq(t.err($$select hub.update_membership(t.id('admin'), p_position => 'mentor')$$), '42501', 'nobody changes own position');
 select t.eq(t.err($$select hub.update_membership(t.id('rookie'), p_subteams => array['nope'])$$), '22023', 'unknown subteam rejected');
 select t.login(t.id('mentor'));
+select hub.update_membership(t.id('rookie'), p_position => 'team_lead');
+select t.eq((select position::text from hub.people where id = t.id('rookie')), 'team_lead', 'mentor promoted a member');
 select hub.update_membership(t.id('rookie'), p_position => 'member');
-select t.eq((select position::text from hub.people where id = t.id('rookie')), 'member', 'mentor promoted rookie');
+select t.eq(t.err($$select hub.update_membership(t.id('rookie'), p_position => 'rookie')$$), '23514', 'no more rookies');
 select t.eq(t.err($$select hub.update_membership(t.id('mentor'), p_is_admin => false)$$), '42501', 'mentor cannot change own admin flag');
 
 -- ---------- permission matrix ----------
