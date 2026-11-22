@@ -1,5 +1,5 @@
 {
-  "name": "neathub",
+  "name": "neatsystem",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,8 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:db": "bash scripts/test-db.sh",
-    "test:systems": "bash scripts/test-systems.sh"
+    "test:db": "bash scripts/test-db.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.0",

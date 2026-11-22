@@ -2,22 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ExternalLink, LogOut, Menu, Pencil, Search, User } from 'lucide-react'
 import { api } from '@/core/api'
-import { MODULES } from '@/app/modules'
-import type { NavEntry, SearchItem } from '@/core/module'
+import { useFeatures, type NavEntry, type SearchItem } from '@/core/feature'
 import { useSession } from '@/core/session'
 import { Avatar, IconButton, Sheet, cx } from '@/ui'
-import { EditMyProfileSheet } from '@/modules/people/forms'
+import { EditMyProfileSheet } from '@/features/people/forms'
 
 function useNav(): NavEntry[] {
   const s = useSession()
-  return MODULES.flatMap((m) => m.nav ?? []).filter((n) => !n.visible || n.visible(s)).sort((a, b) => a.order - b.order)
+  return useFeatures().flatMap((m) => m.nav ?? []).filter((n) => !n.visible || n.visible(s)).sort((a, b) => a.order - b.order)
 }
 
 /** Badge counts are hooks; call them for every entry in a fixed order. */
 function useBadges(): Record<string, number> {
   const s = useSession()
   const out: Record<string, number> = {}
-  for (const n of MODULES.flatMap((m) => m.nav ?? [])) if (n.useBadge) out[n.to] = n.useBadge(s)
+  for (const n of useFeatures().flatMap((m) => m.nav ?? [])) if (n.useBadge) out[n.to] = n.useBadge(s)
   return out
 }
 
@@ -120,16 +119,16 @@ function Palette({ onClose }: { onClose: () => void }) {
   const s = useSession()
   const nav = useNavigate()
   const navEntries = useNav()
-  const fromModules: SearchItem[] = []
-  for (const m of MODULES) if (m.useSearch) fromModules.push(...m.useSearch(s))
+  const fromFeatures: SearchItem[] = []
+  for (const m of useFeatures()) if (m.useSearch) fromFeatures.push(...m.useSearch(s))
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(0)
   const items = useMemo(() => {
     const pages: SearchItem[] = navEntries.map((n) => ({ id: `nav:${n.to}`, group: 'עמודים', label: n.label, to: n.to, icon: n.icon, action: n.action ? () => n.action!(s) : undefined }))
-    const all = [...pages, ...fromModules.filter((x) => !pages.some((p) => p.to === x.to))]
+    const all = [...pages, ...fromFeatures.filter((x) => !pages.some((p) => p.to === x.to))]
     const t = q.trim()
     return (t ? all.filter((x) => `${x.label} ${x.sub ?? ''} ${x.keywords ?? ''}`.includes(t)) : pages).slice(0, 30)
-  }, [q, navEntries, fromModules, s])
+  }, [q, navEntries, fromFeatures, s])
   const go = (x: SearchItem) => { onClose(); if (x.action) x.action(); else if (/^https?:/.test(x.to)) window.open(x.to, '_blank', 'noopener'); else nav(x.to) }
   let lastGroup = ''
   return (

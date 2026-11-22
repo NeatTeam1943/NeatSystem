@@ -36,6 +36,8 @@ export interface Person {
   archive_reason?: string | null
   /** added by a mentor ahead of time; hasn't signed in yet */
   invited?: boolean
+  /** a pending request: the profile made ahead of time it looks like (for approvers) */
+  match_profile?: string | null
 }
 
 /** One frozen record made when someone left the team (hub.archives). */
@@ -108,6 +110,8 @@ export interface DecideJoinInput {
   position?: Position
   grad_year?: number | null
   reason?: string | null
+  /** approving a request that looks like a profile made ahead of time hands that profile over (default); false = a new profile */
+  link?: boolean
 }
 
 export interface MyProfileInput {
@@ -144,9 +148,8 @@ export interface MembershipInput {
 export interface Api {
   readonly mode: 'supabase' | 'mock'
   /**
-   * The Supabase client of the shared project, handed to sub-system tabs so
-   * they reuse this login. null in mock mode. Typed loosely on purpose: tabs
-   * are plain JS and only call .schema(x).rpc/.from on it.
+   * The Supabase client (one login for the whole app). Features build their
+   * own repositories on it. null in mock mode.
    */
   readonly client: import('@supabase/supabase-js').SupabaseClient | null
   // auth

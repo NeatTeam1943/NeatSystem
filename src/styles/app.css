@@ -2,8 +2,8 @@
    NeatSystem design system — the team spec (neatsystem-demo):
    Rubik, light by default and dark with the device, blue brand + orange
    reward, sidebar on desktop / bottom bar on phones, quiet surfaces.
-   Tokens live in tokens.css. Every tab uses these same classes through
-   @neatsystem/kit, so a sub-system looks like the rest of the app.
+   Tokens live in tokens.css. Every feature uses these same classes, so
+   every tab looks like the rest of the app.
    ===================================================================== */
 :root { --dock-h: 64px; --ease: var(--ease-out); }
 * { box-sizing: border-box; min-width: 0; }
@@ -269,3 +269,6 @@ textarea.input { min-height: 96px; padding: 12px; resize: vertical; }
 }
 .card.b { box-shadow: none !important; border: 1px solid var(--border); }
 button.lrow { border: 0; background: none; width: 100%; font: inherit; color: inherit; text-align: start; cursor: pointer; }
+
+/* a feature's routes sit in this wrapper (its CSS is scoped to it); it adds no box of its own */
+.feature-root { display: contents; }

@@ -1,4 +1,4 @@
-import { makeMoneyBridge, moneyStorageKey } from '@/modules/money/bridge'
+import { makeMoneyBridge, moneyStorageKey } from '@/features/money/bridge'
 
 const MT_APP = 'https://neatteam1943.github.io/MoneyTeam/'
 const MT_SB = 'https://abcdefgh.supabase.co'
@@ -35,16 +35,5 @@ describe('MoneyTeam bridge', () => {
     vi.stubGlobal('open', vi.fn(() => tab))
     makeMoneyBridge(MT_APP, MT_SB, 'anon-key').open('#/shopping', 'student@gmail.com')
     await vi.waitFor(() => expect(tab.location.href).toBe(MT_APP + '#/shopping'))
-  })
-})
-
-describe('MoneyTeam submodule (pinned, never changed)', () => {
-  it('our mt-auth is the same auth-js version MoneyTeam ships', async () => {
-    const fs = await import('node:fs')
-    const lock = 'systems/moneyteam/package-lock.json'
-    if (!fs.existsSync(lock)) return // submodule not checked out (plain clone): nothing to compare
-    const theirs = JSON.parse(fs.readFileSync(lock, 'utf8')).packages?.['node_modules/@supabase/auth-js']?.version
-    const ours = JSON.parse(fs.readFileSync('package.json', 'utf8')).dependencies['mt-auth'].split('@').pop()
-    expect(ours).toBe(theirs)
   })
 })

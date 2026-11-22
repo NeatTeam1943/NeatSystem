@@ -5,5 +5,5 @@ dist
 *.log
 *.tsbuildinfo
 
-# output of scripts/import-firebase.mjs (people's names and phones)
+# the one-time Firebase export (people's names and phones)
 firebase-import/

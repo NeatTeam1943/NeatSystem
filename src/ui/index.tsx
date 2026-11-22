@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ArrowRight, X, type LucideIcon } from 'lucide-react'
 import { useBack } from '@/core/nav'
 import { initials } from '@/core/labels'
+import { KeepScope } from '@/core/FeatureScope'
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -119,7 +120,7 @@ export function Sheet({ title, onClose, children, footer, wide, side, sub }: { t
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; prev?.focus?.() }
   }, [onClose])
   return createPortal(
-    <div className={cx('scrim', side && 'side')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <KeepScope><div className={cx('scrim', side && 'side')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={ref} className={cx('sheet', wide && 'wide')} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
         <div className="grab" />
         <div className="sheethead">
@@ -132,8 +133,23 @@ export function Sheet({ title, onClose, children, footer, wide, side, sub }: { t
         {children}
         {footer && <div className="sheetfoot">{footer}</div>}
       </div>
-    </div>,
+    </div></KeepScope>,
     document.body,
+  )
+}
+
+/** "Are you sure?" — a small sheet with a cancel and a confirm button. */
+export function Confirm({ title, text, ok = 'אישור', danger, onOk, onClose }: {
+  title: string; text: string; ok?: string; danger?: boolean; onOk: () => Promise<unknown> | void; onClose: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  return (
+    <Sheet title={title} onClose={onClose} footer={<>
+      <Button onClick={onClose}>ביטול</Button>
+      <Button variant={danger ? 'danger' : 'primary'} busy={busy} onClick={async () => { setBusy(true); await onOk(); setBusy(false); onClose() }}>{ok}</Button>
+    </>}>
+      <p className="c2" style={{ margin: 0 }}>{text}</p>
+    </Sheet>
   )
 }
 

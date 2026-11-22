@@ -92,7 +92,7 @@ export function makeSupabaseApi(url: string, anonKey: string): Api {
       p_full_name: i.full_name, p_phone: i.phone, p_birth_date: i.birth_date, p_grad_year: i.grad_year, p_team: i.team, p_note: i.note,
     }),
     decideJoin: (i) => rpc('decide_join', {
-      p_user: i.user, p_approve: i.approve, p_team: i.team ?? null, p_position: i.position ?? 'member', p_grad_year: i.grad_year ?? null, p_reason: i.reason ?? null,
+      p_user: i.user, p_approve: i.approve, p_team: i.team ?? null, p_position: i.position ?? 'member', p_grad_year: i.grad_year ?? null, p_reason: i.reason ?? null, p_link: i.link ?? true,
     }),
     updateMyProfile: (i) => rpc('update_my_profile', {
       p_nickname: i.nickname, p_phone: i.phone, p_birth_date: i.birth_date, p_fav_tool: i.fav_tool, p_avatar_url: i.avatar_url ?? null,

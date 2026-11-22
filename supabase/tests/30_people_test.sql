@@ -3,13 +3,14 @@
 set client_min_messages = notice;
 reset role;
 
--- a sub-system that keeps per-person rows, with its claim hook (and one whose hook breaks)
+-- a feature that keeps per-person rows, with its claim hook (and one whose hook breaks)
 create schema if not exists demo2;
 create table demo2.notes (user_id uuid, txt text);
 create or replace function demo2.on_profile_claimed(p_old uuid, p_new uuid) returns void language sql security definer as $$
   update demo2.notes set user_id = p_new where user_id = p_old $$;
-create schema if not exists demo3;
-create or replace function demo3.on_profile_claimed(p_old uuid, p_new uuid) returns void language sql as $$ select 1 / 0 $$;
+create or replace function demo2.broken(p_old uuid, p_new uuid) returns void language sql as $$ select 1 / 0 $$;
+select hub.register_feature('demo2', 'דמו', 'demo2.on_profile_claimed(uuid,uuid)', null, 5);
+select hub.register_feature('demo3', 'שבור', 'demo2.broken(uuid,uuid)', null, 6);
 
 set role authenticated;
 select t.login(t.id('member'));
@@ -43,7 +44,7 @@ insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000001aa
 select t.eq((select count(*) from hub.profiles where id = (select id from inv)), 0::bigint, 'the old id is gone');
 select t.eq((select status::text || '/' || invited || '/' || team from hub.profiles where id = '00000000-0000-0000-0000-0000000001aa'), 'active/false/cad', 'the profile is theirs');
 select t.eq((select count(*) from hub.user_permissions where user_id = '00000000-0000-0000-0000-0000000001aa'), 1::bigint, 'their permissions followed');
-select t.eq((select user_id from demo2.notes), '00000000-0000-0000-0000-0000000001aa'::uuid, 'a sub-system moved its rows');
+select t.eq((select user_id from demo2.notes), '00000000-0000-0000-0000-0000000001aa'::uuid, 'a feature moved its rows');
 select t.eq((select count(*) from hub.audit_log where action = 'user.claim_failed' and details ->> 'system' = 'demo3'), 1::bigint, 'a broken hook is logged, not fatal');
 select t.eq((select count(*) from hub.audit_log where target_id = (select id from inv)::text), 0::bigint, 'history moved to the new id');
 
@@ -75,6 +76,6 @@ select t.eq((select full_name || '/' || status::text || '/' || team from hub.peo
 select t.eq(hub.claim_my_profile(), false, 'only once');
 
 reset role;
+delete from hub.features where id in ('demo2', 'demo3');
 drop schema demo2 cascade;
-drop schema demo3 cascade;
 \echo PEOPLE TESTS PASSED

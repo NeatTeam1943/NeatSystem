@@ -1,0 +1,127 @@
+/* ---------- Kit tote (hub) ---------- */
+.nh-app .tote {
+  --w: #8a8981; --s: #74736c; --r: #9d9c95; --l: #95948d;
+  width: 140px; height: 80px; position: relative;
+  transform-style: preserve-3d;
+  transform: scale(var(--ts, 1)) rotateX(-28deg) rotateY(-30deg);
+  transition: transform .35s;
+}
+.nh-app .item.on:not(.denied) .tote { transform: scale(var(--ts, 1)) rotateX(-36deg) rotateY(-30deg) translateY(-8px); }
+.nh-app .fc { position: absolute; box-sizing: border-box; transform-origin: 50% 0; }
+.nh-app .fr, .nh-app .bk {
+  left: 0; top: 0; width: 140px; height: 80px;
+  clip-path: polygon(0 0, 140px 0, 133px 80px, 7px 80px);
+  background-color: var(--w);
+  background-image:
+    linear-gradient(to bottom, var(--r) 0 14px, rgba(0,0,0,.3) 14px 16px, transparent 16px),
+    linear-gradient(90deg, transparent 0 22px, rgba(0,0,0,.2) 22px 23px, transparent 23px 117px, rgba(0,0,0,.2) 117px 118px, transparent 118px),
+    linear-gradient(to bottom, rgba(255,255,255,.06), rgba(0,0,0,.18));
+}
+.nh-app .fr { transform: translateZ(45px) rotateX(-5deg); }
+.nh-app .bk { transform: rotateY(180deg) translateZ(45px) rotateX(-5deg); }
+.nh-app .rt, .nh-app .lf {
+  left: 25px; top: 0; width: 90px; height: 80px;
+  clip-path: polygon(0 0, 90px 0, 83px 80px, 7px 80px);
+  background-color: var(--s);
+  background-image:
+    linear-gradient(to bottom, var(--r) 0 14px, rgba(0,0,0,.3) 14px 16px, transparent 16px),
+    linear-gradient(90deg, transparent 0 30px, rgba(0,0,0,.15) 30px 31px, transparent 31px 59px, rgba(0,0,0,.15) 59px 60px, transparent 60px);
+}
+.nh-app .rt { transform: rotateY(90deg) translateZ(70px) rotateX(-5deg); }
+.nh-app .lf { transform: rotateY(-90deg) translateZ(70px) rotateX(-5deg); }
+.nh-app .hd { position: absolute; top: 22px; left: 30px; width: 30px; height: 9px; border-radius: 5px; background: rgba(0,0,0,.45); }
+.nh-app .bt {
+  left: 7px; top: 42px; width: 126px; height: 76px; transform-origin: 50% 50%; transform: rotateX(90deg);
+  background: radial-gradient(circle, #ffd29c 0%, #ff8c12 25%, #5a3210 60%, #22252c 88%);
+}
+.nh-app .tab { position: absolute; top: 14px; width: 13px; height: 24px; background: var(--r); border: 1px solid rgba(0,0,0,.25); border-top: none; border-radius: 0 0 3px 3px; box-sizing: border-box; }
+.nh-app .tote-yr { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 9px; color: rgba(255,255,255,.8); letter-spacing: .03em; }
+
+/* ---------- Fitted label (image / text centred in a safe box) ---------- */
+.nh-app .fitbox { position: absolute; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.nh-app .fitbox .fi { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; max-width: 100%; text-align: center; }
+.nh-app .fitbox .fi.row { flex-direction: row; gap: 5px; }
+.nh-app .fitbox img { display: block; flex: none; object-fit: contain; border-radius: 18%; }
+.nh-app .fitbox .ft { display: block; max-width: 100%; min-width: 0; font-weight: 500; line-height: 1.12; overflow-wrap: normal; word-break: normal; }
+.nh-app .fitbox .fi.row .ft { text-align: start; }
+.nh-app .fitbox .ft.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.nh-app .fitbox.d { color: rgba(25,20,10,.92); }
+.nh-app .fitbox.l { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+
+.nh-app .fl { position: absolute; left: -4px; top: 0; width: 148px; height: 55px; transform-origin: 50% 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.3,1.35,.5,1); }
+.nh-app .fb { transform: translateZ(-49px) rotateX(90deg); }
+.nh-app .ff { transform: translateZ(49px) rotateX(-90deg); }
+.nh-app .item.on:not(.denied) .fb { transform: translateZ(-49px) rotateX(212deg); }
+.nh-app .item.on:not(.denied) .ff { transform: translateZ(49px) rotateX(-238deg); transition-delay: .06s; }
+.nh-app .face { position: absolute; inset: 0; backface-visibility: hidden; filter: drop-shadow(0 0 1px rgba(0,0,0,.6)); }
+.nh-app .flip { transform: rotateY(180deg); }
+.nh-app .fic { position: absolute; inset: 0; }
+.nh-app .fb .fic { clip-path: polygon(0 0,100% 0,100% 43px,80% 43px,80% 55px,60% 55px,60% 43px,40% 43px,40% 55px,20% 55px,20% 43px,0 43px); }
+.nh-app .ff .fic { clip-path: polygon(0 0,100% 0,100% 55px,80% 55px,80% 43px,60% 43px,60% 55px,40% 55px,40% 43px,20% 43px,20% 55px,0 55px); }
+.nh-app .lidtop {
+  background-color: var(--l);
+  background-image:
+    linear-gradient(to bottom, rgba(0,0,0,.3) 0 1px, var(--r) 1px 7px, rgba(0,0,0,.28) 7px 9px, transparent 9px),
+    linear-gradient(90deg, rgba(255,255,255,.18) 0 4px, transparent 4px calc(100% - 4px), rgba(0,0,0,.2) calc(100% - 4px)),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 1px, transparent 1px 12px);
+}
+.nh-app .under {
+  background-color: var(--s);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.2) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.2) 0 2px, transparent 2px 9px),
+    linear-gradient(to bottom, rgba(0,0,0,.35) 0 6px, transparent 6px);
+}
+.nh-app .kn { position: absolute; top: 0; width: 12px; height: 6px; background: rgba(0,0,0,.38); border-radius: 0 0 2px 2px; }
+.nh-app .pad { position: absolute; top: 15px; width: 24px; height: 12px; background: var(--r); border-radius: 2px; box-shadow: 0 2px 0 rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.3); }
+.nh-app .rec { position: absolute; top: 16px; left: 50%; margin-left: -20px; width: 40px; height: 13px; background: rgba(0,0,0,.12); box-shadow: inset 0 1px 2px rgba(0,0,0,.4); border-radius: 2px; }
+.nh-app .hole { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.6); top: 47px; margin-left: -2.5px; }
+
+
+/* ---------- Link cube (home page) ---------- */
+.nh-app .cube { width: var(--cs); height: var(--cs); position: relative; transform-style: preserve-3d; transform: rotateX(-24deg) rotateY(-32deg); transition: transform .3s; }
+.nh-app .item.on:not(.denied) .cube { transform: rotateX(-24deg) rotateY(-32deg) translateY(-10px); }
+.nh-app .cf { position: absolute; inset: 0; box-sizing: border-box; }
+.nh-app .c1 { background: #1a2380; transform: translateZ(calc(var(--cs) / 2)); border: 1px solid rgba(255,255,255,.14); transition: border-color .2s; }
+.nh-app .c2 { background: #2a35b0; transform: rotateX(90deg) translateZ(calc(var(--cs) / 2)); }
+.nh-app .c3 { background: #111862; transform: rotateY(90deg) translateZ(calc(var(--cs) / 2)); }
+.nh-app .item.on:not(.denied) .c1 { border-color: var(--orange); }
+
+/* ---------- Game pieces ---------- */
+.nh-app .bob { position: relative; width: calc(96px * var(--ts)); height: calc(96px * var(--ts)); animation: nh-flo 3.2s ease-in-out infinite; }
+@keyframes nh-flo { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+.nh-app .piece-svg { position: absolute; inset: 0; }
+.nh-app .item.on:not(.denied) .piece-svg { filter: drop-shadow(0 0 9px rgba(255,140,18,.85)); }
+
+/* ---------- Peek: contents rising out of an open tote ---------- */
+.nh-app .peek {
+  position: absolute; left: 0; top: 0; width: 140px; height: 80px;
+  transform: translateZ(34px); pointer-events: none;
+}
+.nh-app .pk {
+  position: absolute; opacity: 0;
+  transform: translateY(0) scale(.5);
+  transition: transform .5s cubic-bezier(.3,1.5,.5,1), opacity .2s;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.45));
+}
+.nh-app .item.on:not(.denied) .pk .piece-svg { filter: none; }
+.nh-app .item.on:not(.denied) .pk {
+  opacity: 1; transform: translateY(var(--up, -72px)) scale(1);
+  transition-delay: calc(.12s + var(--i) * .05s);
+}
+
+/* ---------- Refuse: locked item shakes "no" ---------- */
+@keyframes nh-refuse {
+  0%, 100% { translate: 0 0; }
+  15% { translate: -7px 0; } 30% { translate: 6px 0; }
+  45% { translate: -5px 0; } 60% { translate: 4px 0; } 78% { translate: -2px 0; }
+}
+.nh-app .item.on.denied .tote, .nh-app .item.on.denied .cube, .nh-app .item.on.denied .bob > * { animation: nh-refuse .5s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nh-app .bob { animation: none; }
+  .nh-app .item.on.denied .tote, .nh-app .item.on.denied .cube, .nh-app .item.on.denied .bob > * { animation: none; }
+  .nh-app .pk { transition: none; }
+  .nh-app .tote, .nh-app .fl, .nh-app .cube { transition: none; }
+}

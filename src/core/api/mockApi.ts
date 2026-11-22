@@ -84,7 +84,7 @@ export const PERSONAS: { id: string; label: string }[] = [
 ]
 
 const store = (() => {
-  const key = 'neathub.mock.v2'
+  const key = 'neatsystem.mock.v3'
   const fresh = () => ({
     rows: seed(), rolePerms: [...ROLE_PERMS], userPerms: [] as UserPerm[], audit: [] as AuditEntry[], archives: [] as ArchiveRecord[],
     me: 'u1' as string, newUser: null as null | { id: string; email: string; name: string },
@@ -152,13 +152,8 @@ function visible(r: Row): Person | null {
 const commit = () => { store.save(); emit() }
 
 /**
- * Mock stand-in for hub.subsystem_snapshot: sub-system tabs register their
- * mock profile readers here (see src/app/tabs.tsx), so archiving in the
- * preview freezes what each tab showed, like the SQL does.
- */
-/**
- * Mock stand-in for hub.register_permissions: a tab's `mock.permissions`
- * (the same list its SQL migration registers) joins the table in the preview.
+ * Preview stand-in for hub.register_permissions: a feature's declared
+ * permissions (the same list its migration registers) join the table.
  */
 export function registerMockPermissions(module: string, perms: { key: string; label: string; grp?: string; sort?: number; roles?: string[] }[]) {
   const s = store.get()
@@ -169,9 +164,9 @@ export function registerMockPermissions(module: string, perms: { key: string; la
   }
 }
 
-type MockCtx = { me: Person; people: Person[]; can: (perm: string) => boolean }
-const snapshotReaders = new Map<string, (user: string, ctx: MockCtx) => unknown | Promise<unknown>>()
-export function registerMockSnapshot(id: string, read: (user: string, ctx: MockCtx) => unknown | Promise<unknown>) { snapshotReaders.set(id, read) }
+/** Preview stand-in for a feature's snapshot() hook (hub.features): what the archive keeps. */
+const snapshotReaders = new Map<string, (user: string) => unknown>()
+export function registerMockSnapshot(feature: string, read: (user: string) => unknown) { snapshotReaders.set(feature, read) }
 
 async function archive(user: string, reason: string | null) {
   if (!has('users.edit_membership')) err('אין הרשאה: users.edit_membership')
@@ -180,9 +175,8 @@ async function archive(user: string, reason: string | null) {
   if (!r || r.status !== 'active') err('אפשר להעביר לארכיון רק חבר/ה פעיל/ה', 'P0002')
   if ((r!.position === 'mentor' || r!.is_admin) && !has('users.grant_permissions')) err('אין הרשאה: users.grant_permissions')
   const systems: Record<string, unknown> = {}
-  const ctx: MockCtx = { me: visible(row(meId())!)!, people: store.get().rows.map(visible).filter((x): x is Person => !!x), can: (p) => has(p) }
   for (const [id, read] of snapshotReaders) {
-    try { systems[id] = await read(user, ctx) } catch (e) { systems[id] = { error: 'P0001', detail: (e as Error).message } }
+    try { systems[id] = await read(user) } catch (e) { systems[id] = { error: 'P0001', detail: (e as Error).message } }
   }
   const s = store.get()
   const at = new Date().toISOString()

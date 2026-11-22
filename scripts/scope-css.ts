@@ -1,23 +1,24 @@
 import type { Plugin } from 'postcss'
 
 /**
- * PostCSS plugin: every CSS file inside systems/<folder>/ is scoped to
- * [data-sys="<folder>"], the wrapper NeatSystem puts around that tab. A tab's
- * own styles therefore can never restyle the shell or another tab.
- *   .card {}                         -> [data-sys="x"] .card {}
- *   body, :root, html                -> [data-sys="x"]
- *   body .x                          -> [data-sys="x"] .x
- *   :root[data-theme="dark"] .x      -> :root[data-theme="dark"] [data-sys="x"] .x   (theme switches stay on <html>)
+ * PostCSS plugin: every CSS file inside src/features/<id>/ is scoped to
+ * [data-feature="<id>"], the wrapper the app puts around that feature's
+ * routes (src/app/App.tsx). A feature's styles therefore never restyle the
+ * shell or another feature, and its class names can't collide.
+ *   .card {}                         -> [data-feature="x"] .card {}
+ *   body, :root, html                -> [data-feature="x"]
+ *   body .x                          -> [data-feature="x"] .x
+ *   :root[data-theme="dark"] .x      -> :root[data-theme="dark"] [data-feature="x"] .x   (theme switches stay on <html>)
  * @keyframes / @font-face are left alone.
  */
-export function scopeSystems(): Plugin {
+export function scopeFeatures(): Plugin {
   return {
-    postcssPlugin: 'neatsystem-scope-systems',
+    postcssPlugin: 'neatsystem-scope-features',
     Once(root) {
       const file = root.source?.input.file ?? ''
-      const m = file.replace(/\\/g, '/').match(/\/systems\/([^/]+)\//)
+      const m = file.replace(/\\/g, '/').match(/\/src\/features\/([^/]+)\//)
       if (!m || file.includes('/node_modules/')) return
-      const scope = `[data-sys="${m[1]}"]`
+      const scope = `[data-feature="${m[1]}"]`
       root.walkRules((rule) => {
         const parent = rule.parent as { type?: string; name?: string } | undefined
         if (parent?.type === 'atrule' && /keyframes$/i.test(parent.name ?? '')) return

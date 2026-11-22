@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Runs the SQL migrations + tests on a throwaway local Postgres:
-#   NeatSystem's own (supabase/), then every sub-system's (systems/*/supabase/),
-#   all twice to prove they are re-runnable, then every test file.
+# Runs the SQL migrations + tests on a throwaway local Postgres: every
+# migration twice (they must be re-runnable), then every test file in order.
 # Usage: scripts/test-db.sh            (needs Postgres 15+ binaries on PATH or PG_BIN)
 # In CI the workflow sets DATABASE_URL to a service container instead.
 set -euo pipefail
@@ -12,9 +11,7 @@ run_all() {
   local url="$1"
   psql "$url" -v ON_ERROR_STOP=1 -q -f supabase/tests/00_stub_supabase.sql
   local migs=(supabase/migrations/*.sql)
-  for d in systems/*/supabase/migrations; do [[ -d "$d" ]] && migs+=("$d"/*.sql); done
   local tests=(supabase/tests/[1-9]*_test.sql)
-  for d in systems/*/supabase/tests; do [[ -d "$d" ]] && tests+=("$d"/*_test.sql); done
   for f in "${migs[@]}"; do
     echo "== $f"
     psql "$url" -v ON_ERROR_STOP=1 -q -t -f "$f" 2>&1 | sed -e "/^[[:space:]]*$/d" -e "s/^psql:[^ ]* NOTICE:  //"

@@ -1,0 +1,218 @@
+/* NEATHUB: NeatSystem's tokens and type (light, dark with the device), so it reads
+   as one more page of the same app. The totes and game pieces keep their own
+   look (tote.css). Scoped to the feature at build time (scripts/scope-css.ts);
+   buttons use the app's .btn. Every rule sits under .nh-app (the page root), so app components
+   rendered in the feature scope (sheets, spinners) keep their own look.
+   Keyframes are global, hence the nh- prefix. */
+:root {
+  --ts: 2;          /* item scale, updated from the window size in ui/HubPage.tsx */
+  --cs: calc(78px * var(--ts)); /* home-page link cube */
+  --orange: var(--reward);
+  --orange-ink: var(--on-reward);
+  --line: var(--border);
+  --muted: var(--text-secondary);
+}
+
+.nh-app { display: flex; flex-direction: column; min-height: calc(100dvh - 140px); overflow-x: clip; color: var(--text); }
+
+/* ---------- toolbar (NeatSystem's top bar is above it) ---------- */
+.nh-app .topbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
+.nh-app .crumbs { font-size: 15px; color: var(--text-secondary); }
+.nh-app .crumbs a { color: var(--brand-text); }
+.nh-app .crumbs b { color: var(--text); font-weight: 500; }
+.nh-app .crumbs .home-title { font-size: 28px; line-height: 34px; font-weight: 700; color: var(--text); }
+.nh-app .spacer { flex: 1; }
+.nh-app .btn.sm .ctl-label { display: inline; }
+.nh-app .banner { background: var(--reward-subtle); color: var(--reward-text); padding: 8px 16px; border-radius: var(--r-md); font-size: 14px; margin-bottom: 8px; }
+
+/* ---------- stage + view transitions ---------- */
+.nh-app .stage {
+  position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-xl);
+  background: radial-gradient(ellipse at 50% 0%, var(--brand-subtle) 0%, var(--bg-surface) 60%); border: 1px solid var(--border); min-height: 60dvh;
+}
+.nh-app .view { flex: 1; display: flex; flex-direction: column; animation-duration: .36s; animation-fill-mode: forwards; animation-timing-function: cubic-bezier(.6,0,.3,1); }
+.nh-app .view.leave-in { animation-name: nh-leaveIn; }
+.nh-app .view.enter-in { animation-name: nh-enterIn; animation-duration: .5s; animation-timing-function: cubic-bezier(.2,.8,.3,1); }
+.nh-app .view.leave-out { animation-name: nh-leaveOut; }
+.nh-app .view.enter-out { animation-name: nh-enterOut; animation-duration: .5s; animation-timing-function: cubic-bezier(.2,.8,.3,1); }
+.nh-app .view.enter-fade { animation-name: nh-fadeIn; }
+@keyframes nh-leaveIn { to { transform: scale(3.5); opacity: 0; } }
+@keyframes nh-enterIn { from { transform: scale(.5); opacity: 0; } }
+@keyframes nh-leaveOut { to { transform: scale(.6); opacity: 0; } }
+@keyframes nh-enterOut { from { transform: scale(1.8); opacity: 0; } }
+@keyframes nh-fadeIn { from { opacity: 0; } }
+
+.nh-app .hub-bar { display: flex; justify-content: center; gap: 10px; align-items: center; flex-wrap: wrap; padding: 14px 16px 0; position: relative; z-index: 2; }
+.nh-app .season-tag { font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--r-full); padding: 4px 12px; background: var(--bg-surface); }
+.nh-app .season-pick { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.nh-app .season-pick select { background: var(--bg-surface); border: 1px solid var(--reward); border-radius: var(--r-sm); padding: 6px 10px; }
+
+.nh-app .hint { text-align: center; font-size: 12px; color: var(--text-muted); margin: 0 0 18px; }
+.nh-app .empty { text-align: center; color: var(--text-secondary); margin: 60px 16px; padding: 0; }
+
+/* ---------- item grid ---------- */
+.nh-app .grid { flex: 1; display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center; padding: 40px 12px 50px; }
+/* All item sizes are multiples of --ts, and each item's box matches how wide it really draws in 3D. */
+.nh-app .grid.home { gap: calc(36px * var(--ts)) calc(16px * var(--ts)); padding-top: calc(66px * var(--ts)); }
+.nh-app .grid.inside { gap: calc(30px * var(--ts)) calc(12px * var(--ts)); padding-top: calc(60px * var(--ts)); max-width: 1500px; margin: 0 auto; width: 100%; }
+.nh-app .item { position: relative; animation: nh-pop .7s cubic-bezier(.3,1.5,.5,1) backwards; }
+@keyframes nh-pop { from { opacity: 0; transform: translateY(-50px) scale(.2); } }
+.nh-app .hit { display: flex; flex-direction: column; align-items: center; background: none; border: 0; padding: 6px; cursor: pointer; perspective: 1000px; border-radius: 14px; color: inherit; }
+.nh-app .hit:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.nh-app .item.in.link .hit { width: calc(112px * var(--ts)); padding: calc(8px * var(--ts)) 0 0; }
+.nh-app .item.hub .hit { width: calc(214px * var(--ts)); padding: calc(46px * var(--ts)) 0 0; }
+.nh-app .item.link.lvl0 .hit { width: calc(var(--cs) * 1.45); padding: calc(var(--cs) * .2) 0 0; }
+.nh-app .item.denied { opacity: .72; }
+.nh-app .sh { width: calc(136px * var(--ts)); height: calc(13px * var(--ts)); border-radius: 50%; background: rgb(11 13 19 / .28); filter: blur(10px); margin-top: calc(41px * var(--ts)); transition: transform .35s, opacity .35s; }
+.nh-app .item.link.lvl0 .sh { width: var(--cs); margin-top: calc(var(--cs) * .34); }
+.nh-app .item.on:not(.denied) .sh { transform: scale(.8); opacity: .6; }
+.nh-app .psh { width: calc(66px * var(--ts)); height: 10px; border-radius: 50%; background: rgb(11 13 19 / .25); filter: blur(5px); margin-top: 6px; }
+
+.nh-app .lock { position: absolute; top: 2px; left: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--reward); color: var(--reward-text); display: grid; place-items: center; pointer-events: none; }
+.nh-app .edit-btn { position: absolute; top: 0; right: 0; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--brand); color: var(--on-brand); display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-lg); z-index: 3; }
+.nh-app .add-tile { width: calc(110px * var(--ts)); height: calc(115px * var(--ts)); border: 2px dashed var(--brand) !important; color: var(--brand-text); justify-content: center; gap: 4px; font-size: 13px; border-radius: var(--r-lg); }
+.nh-app .item.add.lvl0 .add-tile { width: calc(140px * var(--ts)); height: calc(140px * var(--ts)); }
+.nh-app .add-tile:hover { background: var(--brand-subtle); }
+
+/* ---------- drawer / modal ---------- */
+.nh-app .scrim { position: fixed; inset: 0; background: rgb(11 13 19 / .4); z-index: 85; display: flex; align-items: stretch; justify-content: flex-start; }
+.nh-app .scrim.center { align-items: center; justify-content: center; padding: 16px; }
+.nh-app .drawer {
+  margin-inline-start: auto; width: min(420px, 100%); height: 100%; overflow-y: auto; background: var(--bg-raised); border-inline-start: 1px solid var(--border);
+  box-shadow: var(--shadow-xl); padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 14px; animation: nh-slideIn var(--dur-slow) var(--ease-out);
+}
+@keyframes nh-slideIn { from { transform: translateX(-30px); opacity: 0; } }
+.nh-app .drawer > * { flex-shrink: 0; }
+.nh-app .drawer header { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.nh-app .drawer h2, .nh-app .modal h2, .nh-app .admin h2 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 700; }
+.nh-app .icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: var(--r-full); background: none; cursor: pointer; color: var(--text-secondary); }
+.nh-app .icon-btn:hover { background: var(--bg-subtle); }
+.nh-app .preview { height: 230px; border-radius: var(--r-lg); background: radial-gradient(ellipse at 50% 30%, var(--brand-subtle-strong), var(--bg-subtle)); display: grid; place-items: center; perspective: 900px; overflow: hidden; }
+.nh-app .pv-piece { position: relative; width: 156px; height: 156px; }
+.nh-app .pv-tote { padding-top: 30px; }
+.nh-app .pv-tote .tote { --ts: 1.3; }
+.nh-app .pv-cube { --cs: 110px; }
+.nh-app .field { display: flex; flex-direction: column; gap: 6px; }
+.nh-app .lbl { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.nh-app .field input, .nh-app .field select, .nh-app .admin select {
+  min-height: 44px; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--bg-surface); padding: 0 12px; color: var(--text); font-size: 15px;
+}
+.nh-app .field input:focus, .nh-app .field select:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus); }
+.nh-app .field .hint { text-align: start; margin: 0; }
+.nh-app .chip { align-self: flex-start; height: auto; font-size: 12px; background: var(--reward-subtle); color: var(--reward-text); border: 0; border-radius: var(--r-full); padding: 3px 10px; cursor: default; }
+.nh-app .seg { display: flex; background: var(--bg-subtle); border-radius: var(--r-md); padding: 3px; gap: 2px; }
+.nh-app .seg button { flex: 1; background: none; border: 0; border-radius: 9px; min-height: 36px; padding: 0 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+.nh-app .seg button.on { background: var(--bg-surface); color: var(--text); box-shadow: var(--shadow-xs); }
+.nh-app .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.nh-app .err { color: var(--danger); font-size: 13px; margin: 0; }
+.nh-app .drawer footer { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
+.nh-app .drawer footer .primary { flex: 1; }
+
+.nh-app .modal { background: var(--bg-raised); border-radius: var(--r-xl); box-shadow: var(--shadow-xl); padding: 24px; width: min(380px, 100%); text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.nh-app .modal p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+.nh-app .big-lock { width: 36px; height: 36px; color: var(--reward-text); }
+
+/* ---------- who edits what ---------- */
+.nh-app .admin { max-width: 760px; margin: 0 auto; width: 100%; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 10px; }
+.nh-app .muted { color: var(--text-secondary); font-size: 14px; margin: 0; }
+.nh-app .users { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.nh-app .users li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--bg-surface); }
+.nh-app .who { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+.nh-app .who img, .nh-app .who .avatar { width: 36px; height: 36px; border-radius: 50%; }
+.nh-app .who .avatar { display: grid; place-items: center; background: var(--brand-subtle); color: var(--brand-text); font-weight: 500; }
+.nh-app .who b { display: block; font-weight: 500; font-size: 15px; }
+.nh-app .who span { font-size: 12px; color: var(--text-secondary); }
+.nh-app .rolepill { font-size: 12px; font-weight: 500; border-radius: var(--r-full); padding: 3px 10px; background: var(--bg-subtle); color: var(--text-secondary); }
+.nh-app .rolepill.mentor { background: var(--brand-subtle); color: var(--brand-text); }
+.nh-app .rolepill.lead { background: var(--reward-subtle); color: var(--reward-text); }
+.nh-app .scopes { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.nh-app .scope { font-size: 13px; border: 1px solid var(--border); border-radius: var(--r-full); padding: 4px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; background: var(--bg-surface); }
+.nh-app .scope.on { border-color: transparent; background: var(--brand-subtle); color: var(--brand-text); }
+.nh-app .scope input { accent-color: var(--brand); margin: 0; }
+.nh-app .scope.home { border-style: dashed; }
+.nh-app .scope.home.on { border-style: solid; }
+.nh-app .ufilters { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.nh-app .usearch { flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: var(--r-sm); background: var(--bg-subtle); color: var(--text-muted); }
+.nh-app .usearch input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; outline: none; font: inherit; font-size: 15px; color: var(--text); }
+.nh-app .rolechips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.nh-app .rchip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--bg-surface); cursor: pointer; font-size: 15px; font-weight: 500; color: var(--text-secondary); }
+.nh-app .rchip .n { font-size: 12px; min-width: 18px; padding: 1px 5px; border-radius: 9px; background: var(--bg-subtle); text-align: center; }
+.nh-app .rchip.on { background: var(--brand-subtle); border-color: transparent; color: var(--brand-text); }
+.nh-app .ucount { display: flex; gap: 10px; align-items: center; }
+.nh-app .linkish { background: none; border: 0; padding: 0; color: var(--brand-text); cursor: pointer; font-size: 14px; }
+.nh-app .linkish:hover { text-decoration: underline; }
+
+@media (max-width: 560px) {
+  .nh-app .btn.sm .ctl-label { display: none; }
+  .nh-app .grid { align-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nh-app .view, .nh-app .item, .nh-app .drawer { animation: none !important; }
+}
+
+/* ---------- share links / locked ---------- */
+.nh-app .share-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; cursor: pointer; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--r-full); font-size: 13px; color: var(--text-secondary); }
+.nh-app .share-btn:hover { color: var(--brand-text); border-color: var(--brand); }
+.nh-app .locked-hub { margin: 70px auto; padding: 0 16px; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.nh-app .locked-hub h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.nh-app .locked-hub p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+.nh-app .slug-row { display: flex; align-items: stretch; border: 1px solid var(--border-strong); border-radius: var(--r-sm); overflow: hidden; background: var(--bg-surface); }
+.nh-app .slug-row:focus-within { border-color: var(--focus); }
+.nh-app .slug-prefix { display: flex; align-items: center; padding: 0 2px 0 10px; color: var(--text-muted); font-size: 13px; white-space: nowrap; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.nh-app .field .slug-row input { border: 0; background: none; border-radius: 0; flex: 1; min-width: 0; padding-left: 0; box-shadow: none; }
+
+/* ---------- search ---------- */
+.nh-app .search { position: relative; }
+.nh-app .search-toggle { display: none; }
+.nh-app .search-field { display: flex; align-items: center; gap: 8px; min-height: 40px; width: 280px; padding: 0 12px; background: var(--bg-subtle); border-radius: var(--r-md); color: var(--text-muted); }
+.nh-app .search-field:focus-within { box-shadow: 0 0 0 2px var(--focus); }
+.nh-app .search-field input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text); font-size: 15px; }
+.nh-app .search-kbd { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 5px; color: var(--text-muted); }
+.nh-app .search-field:focus-within .search-kbd { display: none; }
+.nh-app .search-results {
+  position: absolute; top: calc(100% + 6px); inset-inline-end: 0; width: min(420px, calc(100vw - 32px)); max-height: min(70vh, 520px); overflow-y: auto;
+  margin: 0; padding: 6px; list-style: none; z-index: 25; background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+}
+.nh-app .search-results li { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--r-sm); cursor: pointer; }
+.nh-app .search-results li.sel { background: var(--bg-subtle); }
+.nh-app .search-empty { color: var(--text-secondary); font-size: 13px; cursor: default !important; justify-content: center; }
+.nh-app .sr-icon { width: 36px; height: 36px; flex: none; display: grid; place-items: center; }
+.nh-app .sr-icon img { width: 32px; height: 32px; object-fit: contain; border-radius: 7px; }
+.nh-app .sr-icon svg { width: 36px; height: 36px; }
+.nh-app .sr-icon.cube-icon { width: 28px; height: 28px; margin: 4px; border-radius: 6px; background: #1a2380; }
+.nh-app .sr-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.nh-app .sr-text b { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nh-app .sr-text span { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nh-app .sr-kind { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--r-full); padding: 2px 8px; }
+.nh-app .sr-kind.hub { color: var(--reward-text); border-color: var(--reward); }
+@media (max-width: 760px) {
+  .nh-app .search-toggle { display: inline-flex; }
+  .nh-app .search-field { display: none; }
+  .nh-app .search.expanded { position: static; order: 10; width: 100%; }
+  .nh-app .search.expanded .search-toggle { display: none; }
+  .nh-app .search.expanded .search-field { display: flex; width: 100%; }
+  .nh-app .search-kbd { display: none; }
+  .nh-app .topbar { position: relative; }
+  .nh-app .search.expanded .search-results { inset-inline: 0; width: auto; top: calc(100% + 4px); }
+}
+
+/* ---------- about ---------- */
+.nh-app .modal.about { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; text-align: start; align-items: stretch; gap: 10px; position: relative; padding: 24px; }
+.nh-app .modal.about h2 { padding-inline-end: 40px; }
+.nh-app .modal.about h3 { margin: 8px 0 0; font-size: 17px; font-weight: 500; color: var(--brand-text); }
+.nh-app .modal.about p, .nh-app .modal.about li { color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+.nh-app .modal.about b { color: var(--text); font-weight: 500; }
+.nh-app .modal.about ul { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; }
+.nh-app .about-note { background: var(--reward-subtle); border-inline-start: 3px solid var(--reward); padding: 8px 12px; border-radius: 0; }
+.nh-app .about-url { display: block; font-size: 12px; background: var(--bg-subtle); border-radius: var(--r-sm); padding: 8px 10px; color: var(--text); overflow-wrap: anywhere; }
+.nh-app .about-x { position: absolute; top: 12px; inset-inline-end: 12px; }
+.nh-app .modal.about .btn.primary { align-self: flex-start; margin-top: 6px; }
+@media (max-width: 560px) { .nh-app .about-btn span { display: none; } }
+.nh-app .nowrap { white-space: nowrap; }
+
+/* ---------- back ---------- */
+.nh-app .back-btn { position: absolute; inset-inline-start: 16px; top: 12px; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; cursor: pointer; background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--r-md); font-size: 15px; font-weight: 500; color: var(--text); }
+.nh-app .back-btn:hover { background: var(--bg-subtle); }
+@media (max-width: 560px) { .nh-app .back-btn { position: static; min-height: 32px; padding: 0 10px; font-size: 13px; } }
+.nh-app .search-toggle { width: 40px; height: 40px; border: 0; border-radius: var(--r-full); background: none; color: var(--text-secondary); align-items: center; justify-content: center; cursor: pointer; }
+.nh-app .search-toggle:hover { background: var(--bg-subtle); }

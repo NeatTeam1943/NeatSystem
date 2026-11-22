@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive   # the sub-system tabs under systems/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -20,8 +18,14 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
-      - run: npm run test:systems
       - run: npm run build:mock
+      - name: mt-auth is the auth-js version MoneyTeam ships
+        run: |
+          lock=$(curl -fsSL https://raw.githubusercontent.com/NeatTeam1943/MoneyTeam/main/package-lock.json) || { echo "::warning::MoneyTeam's package-lock.json is not reachable"; exit 0; }
+          theirs=$(echo "$lock" | jq -r '.packages["node_modules/@supabase/auth-js"].version')
+          ours=$(jq -r '.dependencies["mt-auth"]' package.json | sed 's/.*@//')
+          echo "MoneyTeam: $theirs  mt-auth: $ours"
+          test "$theirs" = "$ours"
 
   database:
     runs-on: ubuntu-latest
@@ -35,8 +39,6 @@ jobs:
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive   # the sub-system tabs under systems/
       - run: bash scripts/test-db.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
